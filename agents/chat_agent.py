@@ -15,7 +15,6 @@ class ChatAgent:
         
         # Check if Ollama is installed and the model is available
         self._check_ollama_status()
-    
     def _check_ollama_status(self):
         """Simulate checking Ollama status without making actual API calls"""
         print("🔍 Checking Ollama installation")
@@ -946,6 +945,59 @@ Themes: {themes}
 Respond with a concise environmental wellness tip (2-3 sentences).
 """
         return self.ollama_generate(prompt, history=history)
+        def generate_chat_report(self, session_id, history):
+        if not history or len(history) < 10:
+            return {"error": "Not enough messages to generate a report. Minimum 10 required."}
+
+        # Extract user messages for context
+        user_entries = [msg['content'] for msg in chat_history if msg.get('role') == 'USER']
+        combined_text = "\n".join(user_entries)
+
+        prompt = f"""
+You are a chat summarizer. Summarize the full conversation below in a concise, structured way and it should be professional.
+Include:
+- Key emotions observed
+- Main themes discussed
+- Helpful responses provided
+- A short motivational message to end the summary
+- Avoid any personal opinions or commentary.
+- intensity: (a number from 0-10 representing the emotional intensity of the journal)
+- trigger_or_catalyst: (reply in a humanly way that how the primary situation or event that triggered the emotional state. give a proper statement with everything included in it.)
+- growth_opportunity: (what the user can learn or take away from this experience that would help them grow in thir reflected mood or theme. )
+- mindfulness_score: (a score from 0-100 evaluating the user's awareness, reflection, and presence in their entry. it should be more on the calmer side as it should define the clarity of thought and how at peace the person is. )
+-Only return a raw JSON object. Do not include any explanation or commentary.
+
+Conversation:
+{combined_text}
+
+Respond ONLY in structured JSON format:
+{{
+  "summary": "...",
+  "emotions": ["..."],
+  "themes": ["..."],
+  "motivational_closing": "...",
+  "mindfulness_score": "...",
+  "intensity": "...",
+  "trigger_or_catalyst": "...",
+  "growth_opportunity": "..."
+}}
+"""
+
+        result = self.ollama_generate(prompt, history=history)
+        try:
+            json_data = json.loads(result)
+        except Exception as e:
+            print(f"❌ Error parsing summary: {e}")
+            return {"error": "Failed to parse summary"}
+
+        # Save to file
+        os.makedirs("chat_reports", exist_ok=True)
+        report_path = f"chat_reports/{session_id}.json"
+        with open(report_path, "w", encoding="utf-8") as f:
+            json.dump(json_data, f, indent=2, ensure_ascii=False)
+
+        print(f"✅ Chat report saved to {report_path}")
+        return json_data
     
     # Main processing function
     def process_user_input(self, user_input, chat_history=None):
