@@ -17,6 +17,8 @@ model User {
   sessions      Session[]
   chatSessions  ChatSession[]
   Authenticator Authenticator[]
+  journalEntries JournalEntry[]
+  journalStats   JournalStats?
  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -100,4 +102,39 @@ model Message {
 enum MessageRole {
   USER
   ASSISTANT
+}
+
+// Journal related models
+model JournalEntry {
+  id            String    @id @default(cuid())
+  content       String    @db.Text
+  mood          String?
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analysis      JournalAnalysis?
+  pointsEarned  Int       @default(5)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model JournalAnalysis {
+  id             String    @id @default(cuid())
+  journalEntryId String    @unique
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  result         Json
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model JournalStats {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStreak     Int      @default(0)
+  longestStreak     Int      @default(0)
+  totalEntries      Int      @default(0)
+  totalPoints       Int      @default(0)
+  lastEntryDate     DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }

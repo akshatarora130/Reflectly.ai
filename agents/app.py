@@ -6,16 +6,18 @@ import sys
 import requests
 import json
 from chat_agent import ChatAgent
+from journal_agent import JournalAgent
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
-# Initialize the chat agent
+# Initialize agents
 print("\n" + "="*70)
-print("🚀 Starting AI Companion Python Backend")
+print("🚀 Starting Reflectly.ai Python Backend")
 print("="*70)
 chat_agent = ChatAgent()
-print("✅ ChatAgent initialized successfully")
+journal_agent = JournalAgent()
+print("✅ Agents initialized successfully")
 print("="*70 + "\n")
 
 @app.route('/api/chat', methods=['POST'])
@@ -173,6 +175,59 @@ def transcribe():
         end_time = time.time()
         time_taken = end_time - start_time
         print(f"❌ Error generating transcription after {time_taken:.2f} seconds: {str(e)}")
+        print("-"*50 + "\n")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/journal/analyze', methods=['POST'])
+def analyze_journal():
+    print("\n" + "-"*50)
+    print("📔 JOURNAL ANALYSIS ENDPOINT CALLED")
+    start_time = time.time()
+    
+    try:
+        data = request.json
+        content = data.get('content', '')
+        entry_id = data.get('journalEntryId', '')
+        user_id = data.get('userId', 'unknown')
+        
+        print(f"📌 Journal analysis requested for entry: {entry_id}")
+        print(f"📌 User ID: {user_id}")
+        
+        if not content:
+            print("❌ Error: Journal content is required")
+            return jsonify({'error': 'Journal content is required'}), 400
+        
+        # Get content length for logging
+        content_length = len(content)
+        print(f"📌 Journal content length: {content_length} characters")
+        
+        # Call the journal agent to analyze the entry
+        print("🔄 Calling JournalAgent.analyze_journal_entry()...")
+        analysis_result = journal_agent.analyze_journal_entry(content, entry_id, user_id)
+        
+        end_time = time.time()
+        time_taken = end_time - start_time
+        print(f"✅ Journal analysis generated successfully in {time_taken:.2f} seconds")
+        
+        # Log some of the analysis results
+        if isinstance(analysis_result, dict):
+            emotions = analysis_result.get('emotions', [])
+            themes = analysis_result.get('themes', [])
+            print(f"📊 Analysis contains: {len(emotions)} emotions, {len(themes)} themes")
+        else:
+            print(f"⚠️ Analysis result is not a dictionary: {type(analysis_result)}")
+        
+        print("-"*50 + "\n")
+        
+        return jsonify(analysis_result)
+    
+    except Exception as e:
+        end_time = time.time()
+        time_taken = end_time - start_time
+        print(f"❌ Error analyzing journal entry after {time_taken:.2f} seconds: {str(e)}")
+        print(f"❌ Exception details: {type(e).__name__}: {str(e)}")
+        import traceback
+        print(f"❌ Traceback: {traceback.format_exc()}")
         print("-"*50 + "\n")
         return jsonify({'error': str(e)}), 500
 

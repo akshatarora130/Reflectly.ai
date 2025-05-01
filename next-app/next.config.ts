@@ -17,6 +17,11 @@ const nextConfig = {
         source: "/api/transcribe",
         destination: "http://localhost:4000/api/transcribe",
       },
+      {
+        // Redirect journal analysis to the Python backend
+        source: "/api/journal/analyze",
+        destination: "http://localhost:4000/api/journal/analyze",
+      },
       // Add other specific Python backend endpoints as needed
     ];
   },
