@@ -18,6 +18,8 @@ import {
   Bot,
   Info,
   Sparkles,
+  FileText,
+  XCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -119,6 +121,7 @@ export default function AICompanion() {
   const [voiceWaveform, setVoiceWaveform] = useState<number[]>(
     Array(15).fill(5)
   );
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -836,6 +839,18 @@ export default function AICompanion() {
     }
   };
 
+  const handleGenerateReport = () => {
+    if (messages.length >= 10) {
+      // For now, just show an alert
+      alert(
+        "Your report is being generated. This feature will be available soon!"
+      );
+    } else {
+      // Open the modal suggesting to chat more
+      setIsReportModalOpen(true);
+    }
+  };
+
   // Show loading state while checking authentication
   if (status === "loading") {
     return (
@@ -900,6 +915,15 @@ export default function AICompanion() {
             )}
           </div>
           <div className="flex items-center space-x-2">
+            <motion.button
+              onClick={handleGenerateReport}
+              className="p-2 rounded-full hover:bg-gray-100 text-gray-500 flex items-center"
+              title="Generate Report"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <FileText size={18} />
+            </motion.button>
             <motion.button
               className="p-2 rounded-full hover:bg-gray-100 text-gray-500"
               title="Conversation Information"
@@ -1549,6 +1573,55 @@ export default function AICompanion() {
           </div>
         </div>
       </div>
+
+      {/* Report Modal */}
+      {isReportModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            className="bg-white rounded-lg shadow-lg max-w-md w-full p-6"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-[#014D4E]">
+                More Conversation Needed
+              </h3>
+              <motion.button
+                onClick={() => setIsReportModalOpen(false)}
+                className="p-1 rounded-full hover:bg-gray-100 text-gray-500"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <XCircle size={18} />
+              </motion.button>
+            </div>
+            <div className="mb-6">
+              <p className="text-gray-600 mb-3">
+                To generate a meaningful report from Reflectily.ai, please have
+                at least 10 messages in your conversation with Sage.
+              </p>
+              <p className="text-gray-600">
+                Currently, you have{" "}
+                <span className="font-bold text-[#014D4E]">
+                  {messages.length}
+                </span>{" "}
+                messages. Continue chatting to reach the minimum requirement.
+              </p>
+            </div>
+            <div className="flex justify-end">
+              <motion.button
+                onClick={() => setIsReportModalOpen(false)}
+                className="bg-[#014D4E] text-white px-4 py-2 rounded-md hover:bg-[#013638] transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Continue Chatting
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
