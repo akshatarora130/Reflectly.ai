@@ -209,7 +209,7 @@ export default function DashboardLayout({
                 <Bot className="h-8 w-8 text-[#014D4E]" />
               </motion.div>
               <h1 className="text-xl font-bold text-[#014D4E]">
-                Sage Assistant
+                Talk to AURA
               </h1>
             </motion.div>
           </div>
@@ -493,7 +493,7 @@ export default function DashboardLayout({
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5, duration: 0.5 }}
               >
-                <Bot className="h-3 w-3 mr-1" /> Sage AI Assistant ©{" "}
+                <Bot className="h-3 w-3 mr-1" /> Reflectly.AI  ©{" "}
                 {new Date().getFullYear()}
               </motion.div>
             </div>
