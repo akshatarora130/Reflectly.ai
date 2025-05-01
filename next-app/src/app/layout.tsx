@@ -1,8 +1,11 @@
+import type React from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Provider from "./provider";
-import { JSX } from "react";
+import type { JSX } from "react";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "./api/auth/[...nextauth]/auth-options";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,17 +22,20 @@ export const metadata: Metadata = {
   description: "Reflectily.ai",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
-}): JSX.Element {
+}): Promise<JSX.Element> {
+  // @ts-ignore
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Provider>
+        <Provider session={session}>
           <main>{children}</main>
         </Provider>
       </body>
