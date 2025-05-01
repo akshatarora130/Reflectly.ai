@@ -141,7 +141,7 @@ class JournalAgent:
         
         # Generate a fallback analysis
         return {
-            "summary": f"This is a {word_count}-word journal entry that expresses the author's thoughts and feelings.",
+            "summary": f"This is a {word_count}-word journal entry that expresses your thoughts and feelings. the replies should be in second person saying e.g you are feeling that way",
             "emotions": ["reflective", "thoughtful", "expressive"],
             "themes": ["self-reflection", "daily experience", "personal thoughts"],
             "insights": [

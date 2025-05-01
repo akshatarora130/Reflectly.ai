@@ -29,6 +29,7 @@ export default function Home() {
       </div>
     </div>
     <div>
+      
     <section className="w-full px-6 md:px-12 lg:px-24 py-20 bg-white">
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
         {/* Left Text Content */}
@@ -44,7 +45,7 @@ export default function Home() {
         {/* Right Image */}
         <div className="flex justify-center relative">
           <Image
-            src="/available-section.png" // Replace with your uploaded image
+            src="/image.png" // Replace with your uploaded image
             alt="User with phone and app UI"
             width={600}
             height={400}
@@ -54,6 +55,44 @@ export default function Home() {
       </div>
     </section>
     </div>
+    <div className="py-16 px-6 text-center bg-amber-100">
+  <h2 className="text-3xl font-bold">
+    Protecting Your <span className="italic text-green-600">Emotional Journey</span>
+  </h2>
+
+  <div className="mt-12 flex flex-col md:flex-row justify-center items-center gap-10 max-w-5xl mx-auto">
+    <div className="flex flex-col items-center text-center max-w-sm">
+      <div className="w-16 h-16 rounded-full bg-green-500 text-white flex items-center justify-center text-2xl shadow-md">
+        🔒
+      </div>
+      <h3 className="mt-6 text-xl font-semibold">Privacy First</h3>
+      <p className="mt-2 text-gray-600">
+        Your conversations remain confidential, encrypted, and protected by the best digital security.
+      </p>
+    </div>
+
+    <div className="flex flex-col items-center text-center max-w-sm ">
+      <div className="w-16 h-16 rounded-full bg-violet-600 text-white flex items-center justify-center text-2xl shadow-md">
+        👓
+      </div>
+      <h3 className="mt-6 text-xl font-semibold">Research-Driven</h3>
+      <p className="mt-2 text-gray-600">
+        Created with PhDs in clinical psychology, Yuna offers succinct, research-based conversations.
+      </p>
+    </div>
+
+    <div className="flex flex-col items-center text-center max-w-sm">
+      <div className="w-16 h-16 rounded-full bg-amber-800 text-white flex items-center justify-center text-2xl shadow-md">
+        🔍
+      </div>
+      <h3 className="mt-6 text-xl font-semibold">Wellness Tracking</h3>
+      <p className="mt-2 text-gray-600">
+        Yuna helps you monitor your emotions, helping you gain insights into your own mental health.
+      </p>
+    </div>
+  </div>
+</div>
+
   </div>
   );
 }
