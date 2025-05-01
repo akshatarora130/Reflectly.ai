@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/app/db/prisma";
-import { authenticateUser } from "@/app/lib/auth-utils";
 import { MessageRole } from "@prisma/client";
+import { authenticateUser } from "@/app/lib/auth-utils";
 
 export async function POST(req: Request) {
   try {
@@ -61,6 +61,46 @@ export async function POST(req: Request) {
 
     console.log(`[AI Agent] Saved user message: ${userMessage.id}`);
 
+    // Fetch all user's chat history across all sessions
+    const allUserSessions = await prisma.chatSession.findMany({
+      where: {
+        userId,
+      },
+      include: {
+        messages: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+      take: 10, // Limit to most recent 10 sessions to avoid context overflow
+    });
+
+    // Flatten all messages from all sessions into a single history
+    const allUserMessages = allUserSessions.flatMap((session) =>
+      session.messages.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+        sessionId: session.id,
+        createdAt: msg.createdAt,
+      }))
+    );
+
+    // Sort all messages by creation time
+    allUserMessages.sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+    );
+
+    // Limit to most recent 50 messages to avoid context overflow
+    const recentUserMessages = allUserMessages.slice(-50);
+
+    console.log(
+      `[AI Agent] Including ${recentUserMessages.length} messages from user's history`
+    );
+
     // Call the Python Flask backend
     const response = await fetch("http://localhost:4000/api/chat", {
       method: "POST",
@@ -71,7 +111,10 @@ export async function POST(req: Request) {
         message,
         sessionId: chatSessionId,
         userId,
-        chatHistory,
+        chatHistory: recentUserMessages.map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        })),
       }),
     });
 

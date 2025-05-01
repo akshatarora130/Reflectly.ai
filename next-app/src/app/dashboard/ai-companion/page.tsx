@@ -692,6 +692,11 @@ export default function AICompanion() {
     setTranscriptionComplete(false);
 
     try {
+      const fullChatHistory = [...messages, userMessage].map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -702,10 +707,7 @@ export default function AICompanion() {
           sessionId: sessionId || "new-chat",
           // @ts-ignore
           userId: session.user.id,
-          chatHistory: messages.map((msg) => ({
-            role: msg.role,
-            content: msg.content,
-          })),
+          chatHistory: fullChatHistory,
         }),
       });
 
