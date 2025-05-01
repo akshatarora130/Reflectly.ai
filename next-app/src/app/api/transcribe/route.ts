@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
+import { authenticateUser } from "@/app/lib/auth-utils";
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession();
+    const requestBody = await req.json();
+    const { audio } = requestBody;
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Authenticate the user
+    const auth = await authenticateUser(requestBody);
+    if (!auth.authenticated) {
+      return auth.response;
     }
 
-    const { audio } = await req.json();
+    const userId = auth.userId;
 
     if (!audio) {
       return NextResponse.json(
@@ -18,9 +21,7 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log(
-      `[Transcription] Received audio data from user: ${session.user.email}`
-    );
+    console.log(`[Transcription] Received audio data from user: ${userId}`);
 
     // Call the Python Flask backend for transcription
     const response = await fetch("http://localhost:4000/api/transcribe", {
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ audio }),
+      body: JSON.stringify({ audio, userId }),
     });
 
     if (!response.ok) {
