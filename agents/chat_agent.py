@@ -945,7 +945,8 @@ Themes: {themes}
 Respond with a concise environmental wellness tip (2-3 sentences).
 """
         return self.ollama_generate(prompt, history=history)
-        def generate_chat_report(self, session_id, history):
+
+    def generate_chat_report(self, session_id, history):
         if not history or len(history) < 10:
             return {"error": "Not enough messages to generate a report. Minimum 10 required."}
 
