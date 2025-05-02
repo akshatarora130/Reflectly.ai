@@ -57,7 +57,7 @@ export default function SelfCareCardsPage() {
   const [deck, setDeck] = useState([...cardData]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isShuffling, setIsShuffling] = useState(false);
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(true); // Start with back showing
   const [viewedCards, setViewedCards] = useState<number[]>([0]); // Start with the first card
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -70,6 +70,7 @@ export default function SelfCareCardsPage() {
       day: "numeric",
     })
   );
+  const [isFirstInteraction, setIsFirstInteraction] = useState(true);
 
   const cardRef = useRef(null);
 
@@ -80,9 +81,23 @@ export default function SelfCareCardsPage() {
     }
   }, [status, router]);
 
+  // Just flip the card for the first interaction without changing it
+  const handleFirstFlip = () => {
+    if (isShuffling) return;
+
+    setIsFirstInteraction(false);
+    setIsFlipped(false); // Just flip to front
+  };
+
   // Shuffle the deck and show the next card
   const shuffleAndDraw = () => {
     if (isShuffling) return;
+
+    // If it's the first interaction, just flip the card without changing it
+    if (isFirstInteraction) {
+      handleFirstFlip();
+      return;
+    }
 
     setIsShuffling(true);
     setIsFlipped(true);
@@ -121,6 +136,12 @@ export default function SelfCareCardsPage() {
 
   // Reset the deck and history
   const resetDeck = () => {
+    // If it's the first interaction, just flip the card without changing it
+    if (isFirstInteraction) {
+      handleFirstFlip();
+      return;
+    }
+
     setIsFlipped(true);
 
     setTimeout(() => {
@@ -135,6 +156,12 @@ export default function SelfCareCardsPage() {
 
   // Show a specific card from history
   const showCardFromHistory = (historyIndex: number) => {
+    // If it's the first interaction, just flip the card without changing it
+    if (isFirstInteraction) {
+      handleFirstFlip();
+      return;
+    }
+
     const cardIndex = viewedCards[historyIndex];
 
     setIsFlipped(true);
@@ -427,7 +454,14 @@ export default function SelfCareCardsPage() {
                   backfaceVisibility: "hidden",
                   transform: "rotateY(0deg)",
                 }}
-                onClick={shuffleAndDraw}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isFirstInteraction) {
+                    handleFirstFlip();
+                  } else {
+                    shuffleAndDraw();
+                  }
+                }}
               >
                 <div className="w-full h-full relative">
                   <motion.div
@@ -446,10 +480,18 @@ export default function SelfCareCardsPage() {
 
               {/* Card Back */}
               <div
-                className="absolute w-full h-full backface-hidden rounded-xl overflow-hidden shadow-2xl bg-[#014D4E] flex items-center justify-center"
+                className="absolute w-full h-full backface-hidden rounded-xl overflow-hidden shadow-2xl bg-[#014D4E] flex items-center justify-center cursor-pointer"
                 style={{
                   backfaceVisibility: "hidden",
                   transform: "rotateY(180deg)",
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isFirstInteraction) {
+                    handleFirstFlip();
+                  } else {
+                    shuffleAndDraw();
+                  }
                 }}
               >
                 <div className="absolute inset-0 p-8 bg-[#014D4E] bg-opacity-90">
