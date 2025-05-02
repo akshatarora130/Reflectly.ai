@@ -205,10 +205,17 @@ export default function JournalEntriesPage() {
                 {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
             </motion.div>
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-6 w-6 text-[#014D4E]" />
-              <h1 className="text-xl font-bold text-[#014D4E]">
-                Journal Entries
+            <div
+              className="flex items-center space-x-3"
+              onClick={() => router.push("/")}
+            >
+              <img
+                src="/logo.svg"
+                alt="logo"
+                className="h-10 w-10 object-contain"
+              />
+              <h1 className="text-2xl md:text-3xl font-bold text-[#014D4E] font-serif">
+                Reflectly.AI
               </h1>
             </div>
           </div>
