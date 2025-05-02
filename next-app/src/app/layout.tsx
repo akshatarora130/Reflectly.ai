@@ -6,6 +6,7 @@ import Provider from "./provider";
 import type { JSX } from "react";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "./api/auth/[...nextauth]/auth-options";
+import { ToastContainer } from "react-toastify";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +37,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Provider session={session}>
+          <ToastContainer />
           <main>{children}</main>
         </Provider>
       </body>

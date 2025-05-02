@@ -7,6 +7,10 @@ import requests
 import json
 from chat_agent import ChatAgent
 from journal_agent import JournalAgent
+from word_drop_agent import WordDropAgent
+from would_you_rather_agent import WouldYouRatherAgent
+from memory_match_agent import MemoryMatchAgent
+from breathing_rhythm_agent import BreathingRhythmAgent
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -17,6 +21,10 @@ print("🚀 Starting Reflectly.ai Python Backend")
 print("="*70)
 chat_agent = ChatAgent()
 journal_agent = JournalAgent()
+word_drop_agent = WordDropAgent()
+would_you_rather_agent = WouldYouRatherAgent()
+memory_match_agent = MemoryMatchAgent()
+breathing_rhythm_agent = BreathingRhythmAgent()
 print("✅ Agents initialized successfully")
 print("="*70 + "\n")
 
@@ -269,6 +277,111 @@ def generate_chat_report():
         print(f"❌ Exception details: {type(e).__name__}: {str(e)}")
         import traceback
         print(f"❌ Traceback: {traceback.format_exc()}")
+        print("-"*50 + "\n")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/games/word-drop/content', methods=['GET'])
+def get_word_drop_content():
+    print("\n" + "-"*50)
+    print("🎮 WORD DROP GAME CONTENT ENDPOINT CALLED")
+    
+    try:
+        difficulty = request.args.get('difficulty', 'medium')
+        theme = request.args.get('theme', 'general')
+        
+        print(f"📌 Requested difficulty: {difficulty}")
+        print(f"📌 Requested theme: {theme}")
+        
+        content = word_drop_agent.generate_content(difficulty, theme)
+        print(f"✅ Word drop game content generated")
+        print("-"*50 + "\n")
+        return jsonify(content)
+    
+    except Exception as e:
+        print(f"❌ Error generating word drop game content: {str(e)}")
+        print("-"*50 + "\n")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/games/would-you-rather/questions', methods=['GET'])
+def get_would_you_rather_questions():
+    print("\n" + "-"*50)
+    print("🎮 WOULD YOU RATHER GAME CONTENT ENDPOINT CALLED")
+    
+    try:
+        count = int(request.args.get('count', '10'))
+        category = request.args.get('category', 'general')
+        
+        print(f"📌 Requested question count: {count}")
+        print(f"📌 Requested category: {category}")
+        
+        content = would_you_rather_agent.generate_questions(count, category)
+        print(f"✅ Would You Rather questions generated: {len(content['questions'])} questions")
+        print("-"*50 + "\n")
+        return jsonify(content)
+    
+    except Exception as e:
+        print(f"❌ Error generating Would You Rather questions: {str(e)}")
+        print("-"*50 + "\n")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/games/memory-match/pairs', methods=['GET'])
+def get_memory_match_pairs():
+    print("\n" + "-"*50)
+    print("🎮 MEMORY MATCH GAME CONTENT ENDPOINT CALLED")
+    
+    try:
+        difficulty = request.args.get('difficulty', 'medium')
+        theme = request.args.get('theme', 'mindfulness')
+        
+        print(f"📌 Requested difficulty: {difficulty}")
+        print(f"📌 Requested theme: {theme}")
+        
+        content = memory_match_agent.generate_card_pairs(difficulty, theme)
+        print(f"✅ Memory match pairs generated: {len(content['pairs'])} pairs")
+        print("-"*50 + "\n")
+        return jsonify(content)
+    
+    except Exception as e:
+        print(f"❌ Error generating memory match pairs: {str(e)}")
+        print("-"*50 + "\n")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/games/breathing-rhythm/exercise', methods=['GET'])
+def get_breathing_exercise():
+    print("\n" + "-"*50)
+    print("🎮 BREATHING RHYTHM GAME CONTENT ENDPOINT CALLED")
+    
+    try:
+        difficulty = request.args.get('difficulty', 'beginner')
+        focus = request.args.get('focus', 'relaxation')
+        
+        print(f"📌 Requested difficulty: {difficulty}")
+        print(f"📌 Requested focus: {focus}")
+        
+        # Generate the breathing exercise
+        content = breathing_rhythm_agent.generate_breathing_exercise(difficulty, focus)
+        
+        # Format the response to match what the frontend expects
+        response = {
+            "exercise": {
+                "name": content["title"],
+                "description": content["description"],
+                "inhaleTime": int(content["pattern"]["inhale"]),
+                "holdTime": int(content["pattern"]["hold1"]),
+                "exhaleTime": int(content["pattern"]["exhale"]),
+                "cycles": 5,  # Default to 5 cycles
+                "instructions": content["instructions"],
+                "benefits": content["benefits"],
+                "affirmations": content["affirmations"]
+            }
+        }
+        
+        print(f"✅ Breathing exercise generated")
+        print("-"*50 + "\n")
+        return jsonify(response)
+    
+    except Exception as e:
+        print(f"❌ Error generating breathing exercise: {str(e)}")
         print("-"*50 + "\n")
         return jsonify({'error': str(e)}), 500
 

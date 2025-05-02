@@ -22,10 +22,28 @@ const nextConfig = {
         source: "/api/journal/analyze",
         destination: "http://localhost:4000/api/journal/analyze",
       },
+      // Game-related API routes
       {
-        // Redirect chat report generation to the Python backend
-        source: "/api/chat/report",
-        destination: "http://localhost:4000/api/chat/report",
+        // Word Drop game content
+        source: "/api/games/word-drop/content",
+        destination: "http://localhost:4000/api/games/word-drop/content",
+      },
+      {
+        // Would You Rather questions
+        source: "/api/games/would-you-rather/questions",
+        destination:
+          "http://localhost:4000/api/games/would-you-rather/questions",
+      },
+      {
+        // Memory Match pairs
+        source: "/api/games/memory-match/pairs",
+        destination: "http://localhost:4000/api/games/memory-match/pairs",
+      },
+      {
+        // Breathing Rhythm exercise
+        source: "/api/games/breathing-rhythm/exercise",
+        destination:
+          "http://localhost:4000/api/games/breathing-rhythm/exercise",
       },
       // Add other specific Python backend endpoints as needed
     ];
