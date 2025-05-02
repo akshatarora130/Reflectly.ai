@@ -42,20 +42,6 @@ export default function Login() {
                 {/* Replacing the bot icon with logo.svg */}
                 <img src="/logo.svg" alt="Reflectly Logo" className="h-10 w-10" />
               </div>
-              <motion.div
-                className="absolute -top-2 -right-2 bg-[#FFE4C4] rounded-full p-1.5"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  rotate: [0, 10, 0],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Number.POSITIVE_INFINITY,
-                  repeatType: "reverse",
-                }}
-              >
-                <Sparkles className="h-4 w-4 text-[#014D4E]" />
-              </motion.div>
             </motion.div>
           </div>
 
@@ -65,7 +51,7 @@ export default function Login() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
-            Reflectly.ai
+            Reflectly.AI
           </motion.h1>
 
           <motion.p
