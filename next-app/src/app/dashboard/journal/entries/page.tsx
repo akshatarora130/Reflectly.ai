@@ -52,6 +52,7 @@ export default function JournalEntriesPage() {
   // Fetch journal entries
   useEffect(() => {
     const fetchEntries = async () => {
+      // @ts-ignore
       if (status !== "authenticated" || !session?.user?.id) return;
 
       try {
@@ -59,6 +60,7 @@ export default function JournalEntriesPage() {
         setError(null);
 
         const queryParams = new URLSearchParams({
+          // @ts-ignore
           userId: session.user.id,
           limit: limit.toString(),
           offset: offset.toString(),
@@ -91,6 +93,7 @@ export default function JournalEntriesPage() {
     };
 
     fetchEntries();
+    // @ts-ignore
   }, [session?.user?.id, status, offset, searchQuery]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -232,7 +235,7 @@ export default function JournalEntriesPage() {
               className="text-gray-600 hover:text-[#014D4E] flex items-center gap-1"
               whileHover={{ scale: 1.05 }}
             >
-              Sage AI Companion
+              Aura AI Companion
             </motion.button>
           </div>
 
@@ -292,7 +295,7 @@ export default function JournalEntriesPage() {
                 className="w-full text-left py-2 px-3 rounded-md hover:bg-gray-100 flex items-center justify-between"
                 whileTap={{ scale: 0.98 }}
               >
-                <div className="flex items-center">Sage AI Companion</div>
+                <div className="flex items-center">Aura AI Companion</div>
                 <ChevronRight size={16} />
               </motion.button>
             </div>

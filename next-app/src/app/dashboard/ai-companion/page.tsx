@@ -22,6 +22,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import ChatReportModal from "@/app/components/chat-report";
 
 type MessageRole = "USER" | "ASSISTANT";
 
@@ -81,8 +82,10 @@ declare global {
   interface Window {
     SpeechRecognition: {
       new (): SpeechRecognition;
+      new (): SpeechRecognition;
     };
     webkitSpeechRecognition: {
+      new (): SpeechRecognition;
       new (): SpeechRecognition;
     };
   }
@@ -122,6 +125,7 @@ export default function AICompanion() {
     Array(15).fill(5)
   );
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isReportDetailModalOpen, setIsReportDetailModalOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -834,17 +838,13 @@ export default function AICompanion() {
       );
       // Remove the optimistically added message
       setMessages((prev) => prev.slice(0, -1));
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleGenerateReport = () => {
     if (messages.length >= 10) {
-      // For now, just show an alert
-      alert(
-        "Your report is being generated. This feature will be available soon!"
-      );
+      // Open the detailed report modal
+      setIsReportDetailModalOpen(true);
     } else {
       // Open the modal suggesting to chat more
       setIsReportModalOpen(true);
@@ -1012,7 +1012,7 @@ export default function AICompanion() {
               transition={{ delay: 0.3, duration: 0.5 }}
               className="text-xl font-semibold text-[#014D4E] mb-2"
             >
-              Welcome to Aura
+              Welcome to Sage
             </motion.h2>
             <motion.p
               initial={{ opacity: 0 }}
@@ -1621,6 +1621,17 @@ export default function AICompanion() {
             </div>
           </motion.div>
         </div>
+      )}
+
+      {/* Chat Report Modal */}
+      {isReportDetailModalOpen && sessionId && (
+        <ChatReportModal
+          isOpen={isReportDetailModalOpen}
+          onClose={() => setIsReportDetailModalOpen(false)}
+          sessionId={sessionId}
+          // @ts-ignore
+          userId={session?.user?.id}
+        />
       )}
     </div>
   );

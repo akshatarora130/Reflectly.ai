@@ -76,6 +76,7 @@ export default function NewJournalEntryPage() {
       return;
     }
 
+    // @ts-ignore
     if (!session?.user?.id) {
       setError("You must be logged in to create a journal entry");
       return;
@@ -93,6 +94,7 @@ export default function NewJournalEntryPage() {
         body: JSON.stringify({
           content,
           mood: selectedMood,
+          // @ts-ignore
           userId: session.user.id,
         }),
       });

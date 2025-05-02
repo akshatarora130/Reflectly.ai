@@ -231,6 +231,47 @@ def analyze_journal():
         print("-"*50 + "\n")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/chat/report', methods=['POST'])
+def generate_chat_report():
+    print("\n" + "-"*50)
+    print("📊 CHAT REPORT GENERATION ENDPOINT CALLED")
+    start_time = time.time()
+    
+    try:
+        data = request.json
+        session_id = data.get('sessionId', 'unknown')
+        user_id = data.get('userId', 'unknown')
+        chat_history = data.get('chatHistory', [])
+        
+        print(f"📌 Report requested for session: {session_id}")
+        print(f"📌 User ID: {user_id}")
+        print(f"📌 Chat history length: {len(chat_history)} messages")
+        
+        if not chat_history or len(chat_history) < 10:
+            print("❌ Error: Not enough messages to generate a report (minimum 10 required)")
+            return jsonify({'error': 'Not enough messages to generate a report. Minimum 10 required.'}), 400
+        
+        # Call the chat agent to generate a report
+        print("🔄 Calling ChatAgent.generate_chat_report()...")
+        report = chat_agent.generate_chat_report(session_id, chat_history)
+        
+        end_time = time.time()
+        time_taken = end_time - start_time
+        print(f"✅ Chat report generated successfully in {time_taken:.2f} seconds")
+        print("-"*50 + "\n")
+        
+        return jsonify(report)
+    
+    except Exception as e:
+        end_time = time.time()
+        time_taken = end_time - start_time
+        print(f"❌ Error generating chat report after {time_taken:.2f} seconds: {str(e)}")
+        print(f"❌ Exception details: {type(e).__name__}: {str(e)}")
+        import traceback
+        print(f"❌ Traceback: {traceback.format_exc()}")
+        print("-"*50 + "\n")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 4000))
     print(f"🌐 Starting Flask server on port {port}...")
