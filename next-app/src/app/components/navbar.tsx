@@ -1,47 +1,30 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
-import { usePathname } from "next/navigation";
+import React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 
-export default function Navbar() {
-  const { data: session, status } = useSession();
-  const pathname = usePathname();
-  const isLoggedIn = status === "authenticated";
-
-  // Don't show navbar on login page
-  if (pathname === "/login") return null;
-
+const Navbar = () => {
   return (
-    <nav className="bg-[#014D4E] text-white p-4">
-      <div className="container mx-auto flex justify-between items-center">
-        <Link href="/" className="text-xl font-bold">
-          reflectly.ai
-        </Link>
+    <nav className="bg-[#FFF5EB] shadow-sm sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        {/* Logo + Brand */}
+        <div className="flex items-center space-x-3">
+          <Image src="/logo.svg" alt="Logo" width={36} height={36} />
+          <span className="text-2xl font-bold text-[#014D4E] tracking-tight">Reflectly.AI</span>
+        </div>
 
-        <div className="flex items-center space-x-4">
-          {isLoggedIn ? (
-            <>
-              <Link href="/dashboard" className="hover:text-[#FFE4C4]">
-                Dashboard
-              </Link>
-              <button
-                onClick={() => signOut({ callbackUrl: "/" })}
-                className="bg-[#FFE4C4] text-[#014D4E] px-4 py-2 rounded-md hover:bg-[#f5d4b0]"
-              >
-                Sign Out
-              </button>
-            </>
-          ) : (
-            <Link
-              href="/login"
-              className="bg-[#FFE4C4] text-[#014D4E] px-4 py-2 rounded-md hover:bg-[#f5d4b0]"
-            >
-              Sign In
-            </Link>
-          )}
+        {/* Navigation Links */}
+        <div className="flex space-x-6 text-[#014D4E] font-medium text-base">
+          <Link href="/dashboard" className="hover:text-black transition-colors duration-200">Dashboard</Link>
+          <Link href="/dashboard/ai-companion" className="hover:text-black transition-colors duration-200">AI Companion</Link>
+          <Link href="/dashboard/journal" className="hover:text-black transition-colors duration-200">Journal</Link>
+          <Link href="/dashboard/self-care" className="hover:text-black transition-colors duration-200">Self Care</Link>
+          <Link href="/dashboard/therapist" className="hover:text-black transition-colors duration-200">Book A Therapist</Link>
         </div>
       </div>
     </nav>
   );
-}
+};
+
+export default Navbar;
