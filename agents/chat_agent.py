@@ -951,7 +951,7 @@ Respond with a concise environmental wellness tip (2-3 sentences).
             return {"error": "Not enough messages to generate a report. Minimum 10 required."}
 
         # Extract user messages for context
-        user_entries = [msg['content'] for msg in chat_history if msg.get('role') == 'USER']
+        user_entries = [msg['content'] for msg in history if msg.get('role') == 'USER']
         combined_text = "\n".join(user_entries)
 
         prompt = f"""
@@ -991,13 +991,6 @@ Respond ONLY in structured JSON format:
             print(f"❌ Error parsing summary: {e}")
             return {"error": "Failed to parse summary"}
 
-        # Save to file
-        os.makedirs("chat_reports", exist_ok=True)
-        report_path = f"chat_reports/{session_id}.json"
-        with open(report_path, "w", encoding="utf-8") as f:
-            json.dump(json_data, f, indent=2, ensure_ascii=False)
-
-        print(f"✅ Chat report saved to {report_path}")
         return json_data
     
     # Main processing function

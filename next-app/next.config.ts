@@ -22,6 +22,11 @@ const nextConfig = {
         source: "/api/journal/analyze",
         destination: "http://localhost:4000/api/journal/analyze",
       },
+      {
+        // Redirect chat report generation to the Python backend
+        source: "/api/chat/report",
+        destination: "http://localhost:4000/api/chat/report",
+      },
       // Add other specific Python backend endpoints as needed
     ];
   },
