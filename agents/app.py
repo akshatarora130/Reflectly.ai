@@ -1,16 +1,17 @@
+import json
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import time
 import sys
 import requests
-import json
 from chat_agent import ChatAgent
 from journal_agent import JournalAgent
 from word_drop_agent import WordDropAgent
 from would_you_rather_agent import WouldYouRatherAgent
 from memory_match_agent import MemoryMatchAgent
 from breathing_rhythm_agent import BreathingRhythmAgent
+from report_agent import ReportAgent
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -25,6 +26,7 @@ word_drop_agent = WordDropAgent()
 would_you_rather_agent = WouldYouRatherAgent()
 memory_match_agent = MemoryMatchAgent()
 breathing_rhythm_agent = BreathingRhythmAgent()
+report_agent = ReportAgent()
 print("✅ Agents initialized successfully")
 print("="*70 + "\n")
 
@@ -233,6 +235,58 @@ def analyze_journal():
         end_time = time.time()
         time_taken = end_time - start_time
         print(f"❌ Error analyzing journal entry after {time_taken:.2f} seconds: {str(e)}")
+        print(f"❌ Exception details: {type(e).__name__}: {str(e)}")
+        import traceback
+        print(f"❌ Traceback: {traceback.format_exc()}")
+        print("-"*50 + "\n")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/combined-analysis', methods=['POST'])
+def combined_analysis():
+    print("\n" + "-"*50)
+    print("📊 COMBINED ANALYSIS ENDPOINT CALLED")
+    start_time = time.time()
+    
+    try:
+        data = request.json
+        user_id = data.get('userId', 'unknown')
+        chat_history = data.get('chatHistory', [])
+        journal_data = data.get('journalData', [])
+        
+        print(f"📌 Combined analysis requested for user: {user_id}")
+        print(f"📌 Chat history: {len(chat_history)} messages")
+        print(f"📌 Journal data: {len(journal_data)} entries")
+        
+        if not chat_history and not journal_data:
+            print("⚠️ Warning: Both chat history and journal data are empty")
+            return jsonify({
+                "greeting": "Welcome to your insights dashboard.",
+                "personality_analysis": "analytical",
+                "current_emotion": "neutral",
+                "progress": "You're just getting started. Add more data by chatting with your AI companion or writing journal entries.",
+                "self_awareness": {
+                    "score": 50,
+                    "comment": "As you share more, we'll provide deeper insights about your emotional patterns."
+                },
+                "suggestion": "Try using the AI companion chat or journal features regularly to build a more accurate analysis of your emotional well-being.",
+                "affirmation": "Every step I take to understand myself better is valuable progress."
+            })
+        
+        # Call the report agent to generate the combined report
+        print("🔄 Calling ReportAgent.generate_combined_report()...")
+        report = report_agent.generate_combined_report(chat_history, journal_data, user_id)
+        
+        end_time = time.time()
+        time_taken = end_time - start_time
+        print(f"✅ Combined analysis generated successfully in {time_taken:.2f} seconds")
+        print("-"*50 + "\n")
+        
+        return jsonify(report)
+    
+    except Exception as e:
+        end_time = time.time()
+        time_taken = end_time - start_time
+        print(f"❌ Error generating combined analysis after {time_taken:.2f} seconds: {str(e)}")
         print(f"❌ Exception details: {type(e).__name__}: {str(e)}")
         import traceback
         print(f"❌ Traceback: {traceback.format_exc()}")

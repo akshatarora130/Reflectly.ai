@@ -45,7 +45,11 @@ const nextConfig = {
         destination:
           "http://localhost:4000/api/games/breathing-rhythm/exercise",
       },
-      // Add other specific Python backend endpoints as needed
+      {
+        // Analysis report
+        source: "/api/analysis/generate",
+        destination: "http://localhost:4000/api/combined-analysis",
+      },
     ];
   },
   eslint: {

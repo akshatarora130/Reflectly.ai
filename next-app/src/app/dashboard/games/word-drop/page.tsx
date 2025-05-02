@@ -1,707 +1,515 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import {
-  Loader2,
-  AlertCircle,
-  ArrowLeft,
-  RefreshCw,
-  Play,
-  Award,
-  Heart,
-  Clock,
-} from "lucide-react";
-import "react-toastify/dist/ReactToastify.css";
-
-interface GameContent {
-  paragraph: string;
-  difficulty: string;
-  theme: string;
-}
+import { motion, AnimatePresence } from "framer-motion";
+import Navbar from "@/app/components/navbar";
 
 export default function WordDropGame() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const [gameContent, setGameContent] = useState<GameContent | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [gameState, setGameState] = useState<
-    "intro" | "countdown" | "playing" | "gameOver"
-  >("intro");
-  const [countdownValue, setCountdownValue] = useState(3);
   const [score, setScore] = useState(0);
-  const [paragraphWords, setParagraphWords] = useState<string[]>([]);
-  const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [collectedWords, setCollectedWords] = useState<string[]>([]);
   const [misses, setMisses] = useState(0);
-  const [difficulty, setDifficulty] = useState("medium");
-  const [theme, setTheme] = useState("general");
-  const [gameTime, setGameTime] = useState(0);
-  const gameTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [gameOver, setGameOver] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [difficulty, setDifficulty] = useState<
+    "easy" | "medium" | "hard" | null
+  >(null);
+  const [activeOrbCount, setActiveOrbCount] = useState(0);
+  const gameRef = useRef<HTMLDivElement>(null);
+  const maxMisses = 3;
+  const minActiveOrbs = 2; // Minimum number of words to spawn at once
+  const maxActiveOrbs = 3; // Maximum number of words to spawn at once
 
-  const gameAreaRef = useRef<HTMLDivElement>(null);
-  const orbIntervals = useRef<{ [key: string]: NodeJS.Timeout }>({});
+  // Expanded list of positive words
+  const positiveWords = [
+    // Personal qualities
+    "brave",
+    "unstoppable",
+    "strong",
+    "kind",
+    "beautiful",
+    "amazing",
+    "fearless",
+    "powerful",
+    "resilient",
+    "creative",
+    "joyful",
+    "radiant",
+    "incredible",
+    "unique",
+    "limitless",
+    "inspiring",
+    "energetic",
+    "motivated",
+    "dedicated",
+    "wonderful",
+    "outstanding",
+    "brilliant",
+    "exceptional",
+    "magnificent",
+    "talented",
+    "extraordinary",
+    "vibrant",
+    "glowing",
+    "determined",
+    "passionate",
+    "genuine",
+    "authentic",
+    "loving",
+    "caring",
+    "thoughtful",
+    "generous",
+    "wise",
+    "intelligent",
+    "clever",
+    "bright",
+    "gifted",
+    "remarkable",
+    "confident",
+    "courageous",
+    "bold",
+    "daring",
+    "adventurous",
+    "optimistic",
+    "positive",
+    "cheerful",
+    "enthusiastic",
+    "spirited",
+    "lively",
+    "dynamic",
+    "innovative",
+    "original",
+    "imaginative",
+    "resourceful",
+    "adaptable",
+    "flexible",
+    "persistent",
+    "tenacious",
+    "focused",
 
-  const maxMisses = 1; // Game ends after 1 miss
+    // Emotional states
+    "happy",
+    "peaceful",
+    "grateful",
+    "blessed",
+    "content",
+    "fulfilled",
+    "hopeful",
+    "serene",
+    "tranquil",
+    "calm",
+    "balanced",
+    "harmonious",
+    "blissful",
+    "delighted",
+    "ecstatic",
+    "elated",
+    "thrilled",
+    "excited",
+    "enchanted",
+    "captivated",
+    "fascinated",
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status, router]);
+    // Growth words
+    "growing",
+    "evolving",
+    "thriving",
+    "blooming",
+    "flourishing",
+    "ascending",
+    "progressing",
+    "developing",
+    "advancing",
+    "improving",
+    "transforming",
+    "expanding",
+    "elevating",
+    "rising",
 
-  useEffect(() => {
-    // Clean up all intervals on unmount
-    return () => {
-      Object.values(orbIntervals.current).forEach((interval) => {
-        clearInterval(interval);
-      });
-      if (gameTimerRef.current) {
-        clearInterval(gameTimerRef.current);
-      }
-    };
-  }, []);
+    // Success words
+    "successful",
+    "accomplished",
+    "achieving",
+    "victorious",
+    "triumphant",
+    "winning",
+    "excelling",
+    "prosperous",
+    "abundant",
+    "fortunate",
+    "lucky",
+    "blessed",
+    "favored",
+    "privileged",
 
-  // Handle countdown
-  useEffect(() => {
-    if (gameState === "countdown" && countdownValue > 0) {
-      const timer = setTimeout(() => {
-        setCountdownValue(countdownValue - 1);
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    } else if (gameState === "countdown" && countdownValue === 0) {
-      // Start the game after countdown reaches 0
-      setGameState("playing");
-      setGameTime(0);
-
-      // Start the game timer
-      gameTimerRef.current = setInterval(() => {
-        setGameTime((prev) => prev + 1);
-      }, 1000);
-
-      // Start spawning words
-      setTimeout(() => {
-        spawnNextWord();
-      }, 500);
-    }
-  }, [gameState, countdownValue]);
-
-  // Format time as MM:SS
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
-  };
-
-  // Parse paragraph into words
-  const parseParagraph = (paragraph: string): string[] => {
-    // Split by spaces and remove punctuation
-    const words = paragraph
-      .split(/\s+/)
-      .map((word) => word.trim())
-      .filter((word) => word.length > 0)
-      .map((word) => word.replace(/[.,!?;:()[\]{}""'']/g, ""));
-
-    return words;
-  };
+    // Relationship words
+    "loved",
+    "cherished",
+    "adored",
+    "treasured",
+    "valued",
+    "appreciated",
+    "respected",
+    "admired",
+    "esteemed",
+    "honored",
+    "revered",
+    "celebrated",
+    "embraced",
+    "accepted",
+  ];
 
   const randomColor = () => {
+    // Using the app's color scheme
     const colors = [
-      "#ff6ec4",
-      "#7873f5",
-      "#f9ca24",
-      "#00cec9",
-      "#fd79a8",
-      "#55efc4",
+      "#014D4E", // Main teal
+      "#016566", // Darker teal
+      "#FFE4C4", // Beige
+      "#E6F2F2", // Light teal
+      "#f0f4f8", // Light blue-gray
+      "#f0f7f7", // Very light teal
     ];
     return colors[Math.floor(Math.random() * colors.length)];
   };
 
   const getFallSpeed = () => {
-    const baseSpeed = 50; // ms
-    if (score >= 30) return Math.max(10, baseSpeed - 20);
+    // Base speed depends on difficulty - LOWER values = FASTER speed
+    let baseSpeed = 30; // Default medium (faster than before)
+
+    if (difficulty === "easy") {
+      baseSpeed = 40; // Faster than before but still easier than medium
+    } else if (difficulty === "hard") {
+      baseSpeed = 15; // Much faster
+    }
+
+    // Further adjust based on score - make it even faster as score increases
+    if (score >= 30) return Math.max(8, baseSpeed - 15);
     if (score >= 15) return Math.max(10, baseSpeed - 10);
     return baseSpeed;
   };
 
-  const startGame = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Sample data for testing if API fails
-      const sampleData = {
-        paragraph:
-          "You are so unique and incredible! Your spirit is radiating with strength! You possess endless energy and courage!",
-        difficulty: difficulty,
-        theme: theme,
-      };
-
-      // Fetch game content when starting the game
-      let data;
-      try {
-        const response = await fetch(
-          `/api/games/word-drop/content?difficulty=${difficulty}&theme=${theme}`
-        );
-
-        if (response.status === 401) {
-          setError("Unauthorized. Please log in again.");
-          router.push("/login");
-          return;
-        }
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `API returned ${response.status}`);
-        }
-
-        data = await response.json();
-      } catch (fetchError) {
-        setError(
-          "Using default content due to connection issues. The game will still work!"
-        );
-        data = sampleData;
-      }
-
-      setGameContent(data);
-
-      // Parse paragraph into words
-      const words = parseParagraph(data.paragraph);
-      setParagraphWords(words);
-
-      // Reset game state
-      setScore(0);
-      setMisses(0);
-      setCollectedWords([]);
-      setCurrentWordIndex(0);
-      setCountdownValue(3);
-      setGameTime(0);
-
-      // Clear any existing intervals
-      Object.values(orbIntervals.current).forEach((interval) => {
-        clearInterval(interval);
-      });
-      orbIntervals.current = {};
-
-      if (gameTimerRef.current) {
-        clearInterval(gameTimerRef.current);
-      }
-
-      // Start countdown
-      setGameState("countdown");
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to start the game";
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
+  const getRandomPositiveWord = () => {
+    return positiveWords[Math.floor(Math.random() * positiveWords.length)];
   };
 
   const spawnOrb = (word: string) => {
-    if (!gameAreaRef.current || gameState !== "playing") return;
+    if (!gameRef.current || gameOver || !gameStarted) return;
 
-    const gameArea = gameAreaRef.current;
-    const orbId = `orb-${Date.now()}-${Math.random()}`;
+    setActiveOrbCount((prev) => prev + 1);
 
-    // Create orb element with inline styles since we're not using global.css
     const orb = document.createElement("div");
-    orb.id = orbId;
+    orb.className =
+      "game-orb absolute w-24 h-24 rounded-full text-white text-center font-bold cursor-pointer shadow-lg transition-transform duration-200 hover:scale-110 flex items-center justify-center select-none";
+    orb.style.background = `radial-gradient(circle, ${randomColor()}, ${randomColor()})`;
+    orb.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.2)";
+    orb.style.top = `0px`;
+    orb.style.left = `${Math.random() * 80 + 10}%`;
+    orb.style.fontSize = "0.9rem";
+    orb.style.padding = "0.5rem";
+    orb.style.textShadow = "0 1px 2px rgba(0, 0, 0, 0.3)";
     orb.innerText = word;
 
-    // Apply styles directly to the element
-    orb.style.position = "absolute";
-    orb.style.padding = "0.75rem 1rem";
-    orb.style.borderRadius = "9999px";
-    orb.style.cursor = "pointer";
-    orb.style.userSelect = "none";
-    orb.style.color = "white";
-    orb.style.fontWeight = "bold";
-    orb.style.textAlign = "center";
-    orb.style.minWidth = "80px";
-    orb.style.fontSize = "20px"; // Increased font size
-    orb.style.border = "2px solid white";
-    orb.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.2)";
-    orb.style.zIndex = "10";
-    orb.style.transform = "translate(-50%, -50%)";
-    orb.style.background = `radial-gradient(circle, ${randomColor()}, ${randomColor()})`;
-    orb.style.top = "0px";
-    orb.style.left = `${Math.random() * 80 + 10}%`;
-
-    // Add click handler
-    orb.onclick = () => {
-      // Clear the interval
-      if (orbIntervals.current[orbId]) {
-        clearInterval(orbIntervals.current[orbId]);
-        delete orbIntervals.current[orbId];
-      }
-
-      // Update score
-      setScore((prevScore) => prevScore + 1);
-      setCollectedWords((prev) => [...prev, word]);
-
-      // Remove the orb with animation
-      orb.style.transition = "all 0.3s ease-out";
-      orb.style.transform = "translate(-50%, -50%) scale(1.5)";
-      orb.style.opacity = "0";
-
-      setTimeout(() => {
-        orb.remove();
-      }, 300);
-
-      // Spawn next word
-      spawnNextWord();
-    };
-
-    gameArea.appendChild(orb);
-
-    // Animate falling
     let topPosition = 0;
     const intervalSpeed = getFallSpeed();
 
     const fallInterval = setInterval(() => {
-      if (gameState !== "playing") {
-        clearInterval(fallInterval);
-        return;
-      }
-
       topPosition += 5;
       orb.style.top = `${topPosition}px`;
 
-      // Check if orb has reached the bottom
-      if (topPosition >= gameArea.clientHeight - 50) {
+      if (topPosition >= window.innerHeight - 100) {
         clearInterval(fallInterval);
-        delete orbIntervals.current[orbId];
         orb.remove();
-
-        // End game immediately if a word reaches the bottom
-        endGame();
-        return;
+        setActiveOrbCount((prev) => prev - 1);
+        setMisses((prev) => {
+          const newMisses = prev + 1;
+          if (newMisses >= maxMisses) {
+            endGame();
+          }
+          return newMisses;
+        });
       }
     }, intervalSpeed);
 
-    // Store the interval reference
-    orbIntervals.current[orbId] = fallInterval;
+    orb.onclick = () => {
+      clearInterval(fallInterval);
+      setScore((prev) => prev + 1);
+      setCollectedWords((prev) => [...prev, word]);
+      orb.remove();
+      setActiveOrbCount((prev) => prev - 1);
+    };
+
+    gameRef.current.appendChild(orb);
   };
 
-  const spawnNextWord = () => {
-    if (gameState !== "playing") return;
+  const spawnWords = () => {
+    if (gameOver || !gameStarted) return;
 
-    if (paragraphWords.length === 0) return;
+    // Determine how many orbs to spawn (between min and max)
+    const orbsToSpawn =
+      minActiveOrbs +
+      Math.floor(Math.random() * (maxActiveOrbs - minActiveOrbs + 1));
 
-    if (currentWordIndex < paragraphWords.length) {
-      const nextWord = paragraphWords[currentWordIndex];
-      setCurrentWordIndex((prev) => prev + 1);
-      spawnOrb(nextWord);
-    } else {
-      // If we've gone through all words, start over
-      setCurrentWordIndex(0);
-      setTimeout(() => {
-        if (gameState === "playing") {
-          spawnNextWord();
-        }
-      }, 1000);
+    // Spawn the determined number of orbs
+    for (let i = 0; i < orbsToSpawn; i++) {
+      spawnOrb(getRandomPositiveWord());
     }
+  };
+
+  const startGame = (selectedDifficulty: "easy" | "medium" | "hard") => {
+    setDifficulty(selectedDifficulty);
+    setGameStarted(true);
+    setScore(0);
+    setMisses(0);
+    setCollectedWords([]);
+    setGameOver(false);
+    setActiveOrbCount(0);
   };
 
   const endGame = () => {
-    setGameState("gameOver");
+    setGameOver(true);
+  };
 
-    // Clear all intervals
-    Object.values(orbIntervals.current).forEach((interval) => {
-      clearInterval(interval);
-    });
-    orbIntervals.current = {};
+  const restartGame = () => {
+    setGameStarted(false);
+    setGameOver(false);
+    setScore(0);
+    setMisses(0);
+    setCollectedWords([]);
+    setActiveOrbCount(0);
 
-    // Stop the game timer
-    if (gameTimerRef.current) {
-      clearInterval(gameTimerRef.current);
+    // Remove any existing orbs
+    const elements = document.querySelectorAll(".game-orb");
+    elements.forEach((el) => el.remove());
+  };
+
+  useEffect(() => {
+    let gameInterval: NodeJS.Timeout | null = null;
+
+    if (gameStarted && !gameOver) {
+      // Start spawning words every 2 seconds
+      gameInterval = setInterval(() => {
+        spawnWords();
+      }, 2000);
     }
 
-    // Remove all orbs
-    if (gameAreaRef.current) {
-      const orbs = gameAreaRef.current.querySelectorAll("div[id^='orb-']");
-      orbs.forEach((orb) => orb.remove());
-    }
-  };
-
-  // Generate a title based on theme and difficulty
-  const getGameTitle = () => {
-    const themeTitle =
-      {
-        general: "Mental Wellness",
-        resilience: "Building Resilience",
-        mindfulness: "Mindful Moments",
-        "self-care": "Self-Care Journey",
-        gratitude: "Gratitude Practice",
-      }[theme] || "Word Catcher";
-
-    return `${themeTitle} - ${
-      difficulty.charAt(0).toUpperCase() + difficulty.slice(1)
-    }`;
-  };
-
-  // Generate a motivational message based on score
-  const getMotivationalMessage = () => {
-    const totalWords = paragraphWords?.length || 0;
-    const collectedPercentage =
-      totalWords > 0 ? (collectedWords.length / totalWords) * 100 : 0;
-
-    if (collectedPercentage >= 90) {
-      return "Amazing job! Your focus and quick reflexes are impressive!";
-    } else if (collectedPercentage >= 70) {
-      return "Great work! You're making excellent progress on your mental wellness journey.";
-    } else if (collectedPercentage >= 50) {
-      return "Good effort! Remember, practice makes perfect.";
-    } else {
-      return "Keep going! Every small step counts toward your mental wellness.";
-    }
-  };
-
-  // Reconstruct the paragraph with collected words highlighted
-  const renderHighlightedParagraph = () => {
-    if (!gameContent || !paragraphWords || paragraphWords.length === 0)
-      return null;
-
-    // Create a set of collected words for faster lookup
-    const collectedWordsSet = new Set(collectedWords);
-
-    return (
-      <div className="text-gray-700 leading-relaxed">
-        {paragraphWords.map((word, index) => {
-          const className = collectedWordsSet.has(word)
-            ? "bg-green-100 text-green-800 px-1 rounded"
-            : "bg-red-100 text-red-800 px-1 rounded";
-
-          return (
-            <span key={`word-${index}`}>
-              <span className={className}>{word}</span>
-              {index < paragraphWords.length - 1 && " "}
-            </span>
-          );
-        })}
-      </div>
-    );
-  };
-
-  // Show loading state while checking authentication
-  if (status === "loading" || isLoading) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
-  }
+    return () => {
+      if (gameInterval) clearInterval(gameInterval);
+    };
+  }, [gameStarted, gameOver]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-4 flex items-center justify-between">
-        <button
-          className="flex items-center text-blue-600 hover:text-blue-800 font-medium"
-          onClick={() => router.push("/dashboard/games")}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Games
-        </button>
+    <div className="flex flex-col h-screen">
+      <Navbar />
+      <div className="relative flex-1 overflow-hidden bg-gradient-to-br from-[#f0f4f8] to-[#FFF5EB] font-sans">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full opacity-20"
+              style={{
+                width: `${Math.random() * 300 + 50}px`,
+                height: `${Math.random() * 300 + 50}px`,
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+                background: `radial-gradient(circle, ${randomColor()}, transparent)`,
+                animation: `float ${
+                  Math.random() * 20 + 10
+                }s infinite ease-in-out`,
+                animationDelay: `${Math.random() * 5}s`,
+              }}
+            />
+          ))}
+        </div>
 
-        <div className="flex items-center space-x-2">
-          {gameState === "playing" && (
+        <div
+          ref={gameRef}
+          className="relative w-full h-full flex flex-col justify-start items-center pt-12"
+        >
+          {gameStarted && (
             <>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                <Clock className="h-3 w-3 mr-1" />
-                {formatTime(gameTime)}
-              </span>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                Score: {score}
-              </span>
-              <div className="flex items-center space-x-1">
-                {misses < maxMisses ? (
-                  <Heart className="h-4 w-4 text-red-500 fill-red-500" />
-                ) : (
-                  <Heart className="h-4 w-4 text-gray-300" />
-                )}
+              <div className="fixed top-24 left-4 bg-white/90 backdrop-blur-sm text-gray-800 text-lg p-3 px-5 rounded-full shadow-lg z-10 border border-[#E6F2F2] transition-all duration-300">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-gradient-to-r from-[#014D4E] to-[#016566] rounded-full flex items-center justify-center text-white mr-2 shadow-md">
+                    <span className="font-bold">{score}</span>
+                  </div>
+                  <span className="font-medium">Score</span>
+                </div>
+              </div>
+              <div className="fixed top-24 right-4 bg-white/90 backdrop-blur-sm text-gray-800 text-lg p-3 px-5 rounded-full shadow-lg z-10 border border-[#E6F2F2] flex items-center transition-all duration-300">
+                <span className="font-medium mr-2">Lives</span>
+                <div className="flex">
+                  {Array(maxMisses)
+                    .fill(0)
+                    .map((_, i) => (
+                      <div
+                        key={i}
+                        className={`w-6 h-6 mx-0.5 ${
+                          i < maxMisses - misses
+                            ? "text-red-500"
+                            : "text-gray-300"
+                        } transition-all duration-300`}
+                      >
+                        ❤️
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              {/* Difficulty badge */}
+              <div className="fixed top-40 left-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium shadow-md z-10 border border-[#E6F2F2] transition-all duration-300">
+                <span
+                  className={`${
+                    difficulty === "easy"
+                      ? "text-[#016566]"
+                      : difficulty === "medium"
+                      ? "text-[#014D4E]"
+                      : "text-[#013638]"
+                  } font-bold`}
+                >
+                  {difficulty?.toUpperCase()} MODE
+                </span>
               </div>
             </>
           )}
-        </div>
-      </div>
 
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-md mb-6 relative"
-        >
-          <span className="flex items-center">
-            <AlertCircle className="mr-2" size={16} />
-            {error}
-          </span>
-        </motion.div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-md overflow-hidden h-full">
-            <div className="p-4 border-b">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-blue-800">
-                  {getGameTitle()}
-                </h2>
-              </div>
-              <p className="text-gray-600 mt-1">
-                {gameState === "intro" &&
-                  "Catch the falling words before they reach the bottom!"}
-                {gameState === "countdown" && "Get ready to catch words!"}
-                {gameState === "playing" && "Click on words to catch them!"}
-                {gameState === "gameOver" &&
-                  "Game over! See your results below."}
-              </p>
-            </div>
-
-            <div className="relative">
-              {/* Game Area */}
-              <div
-                ref={gameAreaRef}
-                className="relative w-full h-[500px] bg-gradient-to-b from-blue-50 to-purple-50 overflow-hidden border-t border-b border-gray-200"
-                style={{ touchAction: "none" }} // Prevent scrolling on mobile
+          <AnimatePresence>
+            {!gameStarted && !gameOver && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl text-center z-20 w-96 border border-[#E6F2F2]"
               >
-                {gameState === "intro" && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                    <motion.div
-                      initial={{ scale: 0.9, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <h2 className="text-2xl font-bold text-blue-800 mb-4">
-                        Word Catcher
-                      </h2>
-                      <p className="text-gray-600 mb-6 max-w-md">
-                        Catch the falling words from positive mental health
-                        affirmations before they reach the bottom. Each word you
-                        catch adds to your score!
-                      </p>
+                <motion.div
+                  initial={{ y: -20 }}
+                  animate={{ y: 0 }}
+                  className="mb-6"
+                >
+                  <h2 className="text-4xl font-bold mb-2 text-[#014D4E]">
+                    Word Drop
+                  </h2>
+                  <p className="text-gray-600">
+                    Catch positive words to boost your mood!
+                  </p>
+                </motion.div>
 
-                      <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Difficulty
-                          </label>
-                          <select
-                            value={difficulty}
-                            onChange={(e) => setDifficulty(e.target.value)}
-                            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                          >
-                            <option value="easy">Easy</option>
-                            <option value="medium">Medium</option>
-                            <option value="hard">Hard</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Theme
-                          </label>
-                          <select
-                            value={theme}
-                            onChange={(e) => setTheme(e.target.value)}
-                            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                          >
-                            <option value="general">General</option>
-                            <option value="resilience">Resilience</option>
-                            <option value="mindfulness">Mindfulness</option>
-                            <option value="self-care">Self-Care</option>
-                            <option value="gratitude">Gratitude</option>
-                          </select>
-                        </div>
-                      </div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="mb-8 bg-[#E6F2F2]/30 p-4 rounded-xl"
+                >
+                  <p className="text-gray-700 mb-2 font-medium">How to play:</p>
+                  <ul className="text-sm text-gray-600 text-left list-disc pl-5 space-y-1">
+                    <li>
+                      Colorful orbs with positive words will fall from the top
+                    </li>
+                    <li>Click on them before they reach the bottom</li>
+                    <li>You have 3 lives - don't miss too many!</li>
+                    <li>Collect as many positive words as you can</li>
+                  </ul>
+                </motion.div>
 
-                      <button
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center"
-                        onClick={startGame}
-                        disabled={isLoading}
-                      >
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Loading...
-                          </>
-                        ) : (
-                          <>
-                            <Play className="mr-2 h-4 w-4" />
-                            Start Game
-                          </>
-                        )}
-                      </button>
-                    </motion.div>
-                  </div>
-                )}
-
-                {/* Countdown overlay */}
-                {gameState === "countdown" && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-50">
-                    <motion.div
-                      key={countdownValue}
-                      initial={{ scale: 2, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0, opacity: 0 }}
-                      transition={{ duration: 0.5 }}
-                      className="text-white text-9xl font-bold"
-                    >
-                      {countdownValue}
-                    </motion.div>
-                  </div>
-                )}
-
-                {gameState === "gameOver" && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-black/50">
-                    <motion.div
-                      initial={{ scale: 0.9, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.5 }}
-                      className="bg-white p-6 rounded-lg shadow-lg max-w-md"
-                    >
-                      <h2 className="text-2xl font-bold text-blue-800 mb-2">
-                        Game Over!
-                      </h2>
-                      <div className="flex justify-center items-center mb-4">
-                        <Award className="h-12 w-12 text-yellow-500 mr-2" />
-                        <span className="text-4xl font-bold text-blue-800">
-                          {score}
-                        </span>
-                      </div>
-                      <p className="text-gray-600 mb-1">
-                        You caught {collectedWords.length} words!
-                      </p>
-                      <p className="text-gray-600 mb-4">
-                        Time: {formatTime(gameTime)}
-                      </p>
-                      <div className="flex justify-center space-x-3 mt-4">
-                        <button
-                          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center"
-                          onClick={startGame}
-                        >
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          Play Again
-                        </button>
-                        <button
-                          className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-                          onClick={() => router.push("/dashboard/games")}
-                        >
-                          Back to Games
-                        </button>
-                      </div>
-                    </motion.div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="p-4 flex justify-between">
-              {gameState !== "playing" &&
-                gameState !== "intro" &&
-                gameState !== "countdown" && (
-                  <button
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center"
-                    onClick={startGame}
+                <p className="mb-6 text-gray-700 font-medium">
+                  Select difficulty:
+                </p>
+                <div className="flex flex-col gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => startGame("easy")}
+                    className="bg-gradient-to-r from-[#014D4E] to-[#016566] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg border border-[#E6F2F2]"
                   >
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    New Game
-                  </button>
-                )}
-            </div>
-          </div>
-        </div>
+                    Easy
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => startGame("medium")}
+                    className="bg-gradient-to-r from-[#016566] to-[#014D4E] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg border border-[#E6F2F2]"
+                  >
+                    Medium
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => startGame("hard")}
+                    className="bg-gradient-to-r from-[#013638] to-[#014D4E] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg border border-[#E6F2F2]"
+                  >
+                    Hard
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
 
-        <div>
-          <div className="bg-white rounded-lg shadow-md overflow-hidden h-full">
-            <div className="p-4 border-b">
-              <h2 className="text-xl font-bold text-blue-800">
-                {gameState === "gameOver" ? "Game Results" : "Game Info"}
-              </h2>
-            </div>
-            <div className="p-4">
-              {gameState === "gameOver" ? (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-medium text-gray-700 mb-2">
-                      Your Affirmation
-                    </h3>
-                    {renderHighlightedParagraph()}
-                  </div>
-
-                  <div>
-                    <h3 className="font-medium text-gray-700 mb-2">
-                      Words Caught ({collectedWords.length})
-                    </h3>
-                    <div className="flex flex-wrap gap-1">
-                      {collectedWords.map((word, index) => (
-                        <span
-                          key={`caught-${index}`}
-                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
-                        >
-                          {word}
-                        </span>
-                      ))}
-                      {collectedWords.length === 0 && (
-                        <p className="text-sm text-gray-500">No words caught</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-orange-50 rounded-lg">
-                    <h3 className="font-medium text-blue-800 mb-2">
-                      Reflection
-                    </h3>
-                    <p className="text-gray-700">{getMotivationalMessage()}</p>
+            {gameOver && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl text-center z-20 w-96 border border-[#E6F2F2]"
+              >
+                <div className="mb-2 flex justify-center">
+                  <div className="w-16 h-16 bg-gradient-to-r from-[#014D4E] to-[#016566] rounded-full flex items-center justify-center text-white">
+                    <span className="text-3xl">🎉</span>
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-medium text-gray-700 mb-2">
-                      How to Play
-                    </h3>
-                    <ul className="list-disc list-inside text-gray-600 space-y-1">
-                      <li>Words will fall from the top of the screen</li>
-                      <li>
-                        Click or tap on words to catch them before they reach
-                        the bottom
-                      </li>
-                      <li>Each caught word adds to your score</li>
-                      <li>The game ends when a word reaches the bottom</li>
-                      <li>Try to catch as many words as you can!</li>
-                    </ul>
-                  </div>
+                <h2 className="text-3xl font-bold mb-4 text-[#014D4E]">
+                  Game Over!
+                </h2>
 
-                  <div>
-                    <h3 className="font-medium text-gray-700 mb-2">Benefits</h3>
-                    <ul className="list-disc list-inside text-gray-600 space-y-1">
-                      <li>Improves focus and attention</li>
-                      <li>Enhances hand-eye coordination</li>
-                      <li>Reinforces positive mental health language</li>
-                      <li>Provides a fun way to practice mindfulness</li>
-                    </ul>
-                  </div>
+                <div className="bg-[#E6F2F2]/30 p-4 rounded-xl mb-6">
+                  <p className="text-gray-700 mb-1">Your Score</p>
+                  <p className="text-4xl font-bold text-[#014D4E] mb-2">
+                    {score}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {score < 5
+                      ? "Good effort! Keep practicing."
+                      : score < 15
+                      ? "Well done! You're getting better."
+                      : "Amazing job! You're a pro!"}
+                  </p>
+                </div>
 
-                  <div className="p-4 bg-orange-50 rounded-lg">
-                    <h3 className="font-medium text-blue-800 mb-2">Tip</h3>
-                    <p className="text-gray-700">
-                      Try to focus on the words that are closest to the bottom
-                      first, then work your way up. This strategy helps manage
-                      multiple falling words effectively.
+                <div className="mb-6">
+                  <p className="font-medium text-gray-700 mb-2">
+                    Your Positive Words:
+                  </p>
+                  <div className="max-h-32 overflow-y-auto bg-gradient-to-r from-[#E6F2F2]/30 to-[#FFE4C4]/30 p-4 rounded-xl">
+                    <p className="italic text-lg text-gray-700">
+                      {collectedWords.length > 0
+                        ? `"${collectedWords.join(" ")}"`
+                        : "No words collected"}
                     </p>
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={restartGame}
+                  className="bg-gradient-to-r from-[#014D4E] to-[#016566] hover:from-[#013638] hover:to-[#015556] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg w-full"
+                >
+                  Play Again
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
+
+        {/* Custom CSS for floating animation */}
+        <style jsx>{`
+          @keyframes float {
+            0%,
+            100% {
+              transform: translateY(0) rotate(0deg);
+            }
+            50% {
+              transform: translateY(-20px) rotate(5deg);
+            }
+          }
+        `}</style>
       </div>
     </div>
   );
