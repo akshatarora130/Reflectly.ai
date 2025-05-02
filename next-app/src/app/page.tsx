@@ -82,7 +82,7 @@ export default function Home() {
     <div className="mt-16 flex flex-col md:flex-row justify-center items-center gap-16">
       {/* Feature 1 */}
       <div className="flex flex-col items-center text-center max-w-sm">
-        <div className="w-20 h-20 rounded-full bg-green-500 text-white flex items-center justify-center text-4xl shadow-lg">
+        <div className="w-20 h-20 rounded-full bg-green-900 text-white flex items-center justify-center text-4xl shadow-lg">
           🔒
         </div>
         <h3 className="mt-8 text-2xl font-semibold">Privacy First</h3>
@@ -93,7 +93,7 @@ export default function Home() {
 
       {/* Feature 2 */}
       <div className="flex flex-col items-center text-center max-w-sm">
-        <div className="w-20 h-20 rounded-full bg-violet-600 text-white flex items-center justify-center text-4xl shadow-lg">
+        <div className="w-20 h-20 rounded-full bg-green-900 text-white flex items-center justify-center text-4xl shadow-lg">
           👓
         </div>
         <h3 className="mt-8 text-2xl font-semibold">Journaling Insights</h3>
@@ -104,7 +104,7 @@ export default function Home() {
 
       {/* Feature 3 */}
       <div className="flex flex-col items-center text-center max-w-sm">
-        <div className="w-20 h-20 rounded-full bg-amber-800 text-white flex items-center justify-center text-4xl shadow-lg">
+        <div className="w-20 h-20 rounded-full bg-green-900 text-white flex items-center justify-center text-4xl shadow-lg">
           🔍
         </div>
         <h3 className="mt-8 text-2xl font-semibold">Healing process made fun</h3>
@@ -115,6 +115,7 @@ export default function Home() {
     </div>
   </div>
 </div>
+
 
 <div className="min-h-screen flex items-center bg-white px-6 md:px-12 lg:px-24">
   <section className="w-full max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">

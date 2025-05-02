@@ -4,7 +4,7 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Bot, Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
@@ -38,8 +38,9 @@ export default function Login() {
               animate={{ scale: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <div className="bg-[#014D4E] rounded-full p-4">
-                <Bot className="h-10 w-10 text-white" />
+              <div className="bg-white  rounded-full p-4">
+                {/* Replacing the bot icon with logo.svg */}
+                <img src="/logo.svg" alt="Reflectly Logo" className="h-10 w-10" />
               </div>
               <motion.div
                 className="absolute -top-2 -right-2 bg-[#FFE4C4] rounded-full p-1.5"
@@ -64,7 +65,7 @@ export default function Login() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
-            reflectily.ai
+            Reflectly.ai
           </motion.h1>
 
           <motion.p
@@ -187,12 +188,12 @@ export default function Login() {
 
           <motion.div
             className="mt-10 flex items-center gap-2 text-[#FFE4C4]"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 1 }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 1 }}
           >
-            <span>Start your journey today</span>
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="w-5 h-5" />
+            <span className="font-medium">Discover more</span>
           </motion.div>
         </motion.div>
       </div>
