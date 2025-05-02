@@ -838,6 +838,8 @@ export default function AICompanion() {
       );
       // Remove the optimistically added message
       setMessages((prev) => prev.slice(0, -1));
+    } finally {
+      setIsLoading(false);
     }
   };
 
