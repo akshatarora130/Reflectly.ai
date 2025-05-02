@@ -116,6 +116,45 @@ export default function Home() {
   </div>
 </div>
 
+<div className="min-h-screen flex items-center bg-white px-6 md:px-12 lg:px-24">
+  <section className="w-full max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+    {/* Left Image */}
+    <div className="flex justify-start relative order-2 md:order-1">
+      <Image
+        src="/image copy.png"
+        alt="User with phone and app UI"
+        width={600}
+        height={400}
+        className="rounded-2xl object-cover"
+      />
+    </div>
+
+    {/* Right Text */}
+    <div className="order-1 md:order-2">
+      <h2 className="text-3xl md:text-4xl font-serif font-semibold text-black mb-4">
+        Affordable <span className="text-green-600 italic font-medium">Self Improvement</span>
+      </h2>
+      <p className="text-lg text-gray-700 max-w-md">
+        Reflectly offers psychologically and carefully desgined ways to improve your well being and actions in the social world. <br/>Feel free to reach out to AURA for anything and everything. <br/>Start journaling to earn points and streaks everyday. <br/>Engaging games hook you up for collecting points while also promise to soothe your brain.<br/> Lastly, don't forget your weekly meetup with your favourite therpists!
+      </p>
+    </div>
+  </section>
+</div>
+
+
+
+<div className="px-6 py-12 md:py-24">
+  <div className="bg-green-900 rounded-[3rem] px-6 py-16 md:py-24 text-center text-white">
+    <h2 className="text-3xl md:text-5xl font-serif font-semibold mb-4">
+      Your Journey Begins Here<br />
+      <span className="text-green-300 italic font-medium">Start For Free.</span>
+    </h2>
+    <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-8">
+      Log In and get started on your insightful yet fun loving journey! 
+    </p>
+  </div>
+</div>
+
 
 
     </div>
