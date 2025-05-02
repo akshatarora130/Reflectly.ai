@@ -1,5 +1,5 @@
 "use client";
-
+import Navbar from "@/app/components/navbar";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -247,81 +247,7 @@ export default function SelfCareCardsPage() {
       </div>
 
       {/* Top Navigation Bar */}
-      <header className="bg-white border-b border-gray-200 py-3 px-6 shadow-sm z-20 relative">
-        <div className="flex justify-between items-center max-w-7xl mx-auto">
-          <div className="flex items-center space-x-3">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="md:hidden"
-            >
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2 rounded-full hover:bg-gray-100 text-gray-600"
-              >
-                {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-              </button>
-            </motion.div>
-            <div className="flex items-center space-x-3">
-              <img
-                src="/logo.svg"
-                alt="logo"
-                className="h-10 w-10 object-contain"
-              />
-              <h1 className="text-2xl md:text-3xl font-bold text-[#014D4E] font-serif">
-                Reflectly.AI
-              </h1>
-            </div>
-          </div>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
-            <motion.button
-              onClick={() => router.push("/dashboard")}
-              className="text-gray-600 hover:text-[#014D4E] flex items-center gap-1"
-              whileHover={{ scale: 1.05 }}
-            >
-              <Home size={18} className="mr-1" />
-              Dashboard
-            </motion.button>
-            <motion.button
-              onClick={() => router.push("/dashboard/journal")}
-              className="text-gray-600 hover:text-[#014D4E] flex items-center gap-1"
-              whileHover={{ scale: 1.05 }}
-            >
-              Journal
-            </motion.button>
-            <motion.button
-              onClick={() => router.push("/dashboard/ai-companion")}
-              className="text-gray-600 hover:text-[#014D4E] flex items-center gap-1"
-              whileHover={{ scale: 1.05 }}
-            >
-              Aura AI Companion
-            </motion.button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <motion.button
-              onClick={() => setIsHistoryModalOpen(true)}
-              className="p-2 rounded-full hover:bg-gray-100 text-[#014D4E]"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              title="Card History"
-            >
-              <History size={20} />
-            </motion.button>
-            <motion.button
-              onClick={() => setIsInfoModalOpen(true)}
-              className="p-2 rounded-full hover:bg-gray-100 text-[#014D4E]"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              title="About Self-Care Cards"
-            >
-              <Info size={20} />
-            </motion.button>
-          </div>
-        </div>
-      </header>
+      <Navbar/>
 
       {/* Mobile Menu */}
       <AnimatePresence>
