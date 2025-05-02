@@ -19,7 +19,7 @@ const Navbar = () => {
           <Link href="/dashboard" className="hover:text-black transition-colors duration-200">Dashboard</Link>
           <Link href="/dashboard/ai-companion" className="hover:text-black transition-colors duration-200">AI Companion</Link>
           <Link href="/dashboard/journal" className="hover:text-black transition-colors duration-200">Journal</Link>
-          <Link href="/dashboard/self-care" className="hover:text-black transition-colors duration-200">Self Care</Link>
+          <Link href="/dashboard/self-care-cards" className="hover:text-black transition-colors duration-200">Self Care</Link>
           <Link href="/dashboard/therapist" className="hover:text-black transition-colors duration-200">Book A Therapist</Link>
         </div>
       </div>

@@ -1014,7 +1014,7 @@ export default function AICompanion() {
               transition={{ delay: 0.3, duration: 0.5 }}
               className="text-xl font-semibold text-[#014D4E] mb-2"
             >
-              Welcome to Sage
+              Welcome to AURA
             </motion.h2>
             <motion.p
               initial={{ opacity: 0 }}
