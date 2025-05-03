@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/app/components/navbar";
+import { Heart, Trophy, Info, Star } from "lucide-react";
 
 export default function WordDropGame() {
   const [score, setScore] = useState(0);
@@ -14,10 +15,11 @@ export default function WordDropGame() {
     "easy" | "medium" | "hard" | null
   >(null);
   const [activeOrbCount, setActiveOrbCount] = useState(0);
+  const [showInstructions, setShowInstructions] = useState(false);
   const gameRef = useRef<HTMLDivElement>(null);
   const maxMisses = 3;
-  const minActiveOrbs = 2; // Minimum number of words to spawn at once
-  const maxActiveOrbs = 3; // Maximum number of words to spawn at once
+  const minActiveOrbs = 2;
+  const maxActiveOrbs = 3;
 
   // Expanded list of positive words
   const positiveWords = [
@@ -158,25 +160,46 @@ export default function WordDropGame() {
     "accepted",
   ];
 
-  const randomColor = () => {
-    // Using the app's color scheme
-    const colors = [
-      "#014D4E", // Main teal
-      "#016566", // Darker teal
-      "#FFE4C4", // Beige
-      "#E6F2F2", // Light teal
-      "#f0f4f8", // Light blue-gray
-      "#f0f7f7", // Very light teal
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
+  const getOrbColors = () => {
+    // Use the same teal/blue-green color palette for all difficulties, but with varying intensity
+    const palettes = {
+      easy: [
+        ["#016566", "#014D4E"], // Teal gradient (main site colors)
+        ["#017778", "#015F60"], // Slightly lighter teal
+        ["#018788", "#016F70"], // Slightly lighter teal
+        ["#019798", "#017F80"], // Slightly lighter teal
+      ],
+      medium: [
+        ["#016566", "#014D4E"], // Teal gradient (main site colors)
+        ["#015556", "#013D3E"], // Slightly darker teal
+        ["#014546", "#012D2E"], // Darker teal
+        ["#013536", "#011D1E"], // Darker teal
+      ],
+      hard: [
+        ["#016566", "#014D4E"], // Teal gradient (main site colors)
+        ["#014546", "#012D2E"], // Darker teal
+        ["#013536", "#011D1E"], // Darker teal
+        ["#012526", "#010D0E"], // Very dark teal
+      ],
+    };
+
+    // Default to medium if no difficulty selected
+    const activePalette = difficulty ? palettes[difficulty] : palettes.medium;
+    const selectedPalette =
+      activePalette[Math.floor(Math.random() * activePalette.length)];
+
+    return {
+      from: selectedPalette[0],
+      to: selectedPalette[1],
+    };
   };
 
   const getFallSpeed = () => {
     // Base speed depends on difficulty - LOWER values = FASTER speed
-    let baseSpeed = 30; // Default medium (faster than before)
+    let baseSpeed = 30; // Default medium
 
     if (difficulty === "easy") {
-      baseSpeed = 40; // Faster than before but still easier than medium
+      baseSpeed = 40;
     } else if (difficulty === "hard") {
       baseSpeed = 15; // Much faster
     }
@@ -197,16 +220,52 @@ export default function WordDropGame() {
     setActiveOrbCount((prev) => prev + 1);
 
     const orb = document.createElement("div");
+    const colors = getOrbColors();
+
     orb.className =
-      "game-orb absolute w-24 h-24 rounded-full text-white text-center font-bold cursor-pointer shadow-lg transition-transform duration-200 hover:scale-110 flex items-center justify-center select-none";
-    orb.style.background = `radial-gradient(circle, ${randomColor()}, ${randomColor()})`;
-    orb.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.2)";
+      "game-orb absolute flex items-center justify-center select-none cursor-pointer";
+    orb.style.width = `${Math.random() * 20 + 90}px`;
+    orb.style.height = orb.style.width;
+    orb.style.borderRadius = "50%";
+    orb.style.background = `radial-gradient(circle, ${colors.from}, ${colors.to})`;
+    orb.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.15)";
     orb.style.top = `0px`;
     orb.style.left = `${Math.random() * 80 + 10}%`;
-    orb.style.fontSize = "0.9rem";
-    orb.style.padding = "0.5rem";
-    orb.style.textShadow = "0 1px 2px rgba(0, 0, 0, 0.3)";
-    orb.innerText = word;
+    orb.style.transform = "translateX(-50%)";
+    orb.style.transition = "transform 0.2s ease-out";
+    orb.style.zIndex = "10";
+
+    // Create inner text element
+    const textElement = document.createElement("span");
+    textElement.className = "text-center font-bold text-white";
+    textElement.style.fontSize = "1rem"; // Slightly larger text
+    textElement.style.padding = "0.5rem";
+    textElement.style.textShadow =
+      "0 2px 4px rgba(0, 0, 0, 0.6), 0 0 2px rgba(0, 0, 0, 0.9)"; // Stronger text shadow
+    textElement.style.pointerEvents = "none";
+    textElement.style.position = "relative";
+    textElement.style.zIndex = "2";
+    textElement.innerText = word;
+
+    // Add a semi-transparent background behind the text for better readability
+    const textBackground = document.createElement("div");
+    textBackground.className =
+      "absolute inset-0 rounded-full flex items-center justify-center";
+    textBackground.style.background = "rgba(0, 0, 0, 0.2)"; // Semi-transparent black background
+    textBackground.style.zIndex = "1";
+    orb.appendChild(textBackground);
+
+    // Add glow effect
+    const glowElement = document.createElement("div");
+    glowElement.className = "absolute inset-0 rounded-full";
+    glowElement.style.background = `radial-gradient(circle, ${colors.from}33, transparent 70%)`;
+    glowElement.style.filter = "blur(8px)";
+    glowElement.style.transform = "scale(1.2)";
+    glowElement.style.opacity = "0.7";
+    glowElement.style.pointerEvents = "none";
+
+    orb.appendChild(glowElement);
+    orb.appendChild(textElement);
 
     let topPosition = 0;
     const intervalSpeed = getFallSpeed();
@@ -217,8 +276,18 @@ export default function WordDropGame() {
 
       if (topPosition >= window.innerHeight - 100) {
         clearInterval(fallInterval);
-        orb.remove();
-        setActiveOrbCount((prev) => prev - 1);
+        orb.classList.add("missed");
+
+        // Add miss animation
+        orb.style.transform = "translateX(-50%) scale(0.5)";
+        orb.style.opacity = "0";
+        orb.style.transition = "transform 0.3s ease-out, opacity 0.3s ease-out";
+
+        setTimeout(() => {
+          orb.remove();
+          setActiveOrbCount((prev) => prev - 1);
+        }, 300);
+
         setMisses((prev) => {
           const newMisses = prev + 1;
           if (newMisses >= maxMisses) {
@@ -229,15 +298,88 @@ export default function WordDropGame() {
       }
     }, intervalSpeed);
 
+    // Hover effect
+    orb.onmouseenter = () => {
+      orb.style.transform = "translateX(-50%) scale(1.1)";
+      orb.style.boxShadow = "0 12px 32px rgba(0, 0, 0, 0.25)";
+    };
+
+    orb.onmouseleave = () => {
+      orb.style.transform = "translateX(-50%) scale(1)";
+      orb.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.15)";
+    };
+
     orb.onclick = () => {
       clearInterval(fallInterval);
+
+      // Add click animation
+      orb.style.transform = "translateX(-50%) scale(1.3)";
+      orb.style.opacity = "0";
+      orb.style.transition = "transform 0.4s ease-out, opacity 0.4s ease-out";
+
+      // Create particle effect
+      createParticles(Number.parseInt(orb.style.left), topPosition, colors);
+
+      setTimeout(() => {
+        orb.remove();
+        setActiveOrbCount((prev) => prev - 1);
+      }, 400);
+
       setScore((prev) => prev + 1);
       setCollectedWords((prev) => [...prev, word]);
-      orb.remove();
-      setActiveOrbCount((prev) => prev - 1);
     };
 
     gameRef.current.appendChild(orb);
+  };
+
+  const createParticles = (
+    x: number,
+    y: number,
+    colors: { from: string; to: string }
+  ) => {
+    if (!gameRef.current) return;
+
+    const particleCount = 8;
+
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement("div");
+      particle.className = "absolute rounded-full";
+      particle.style.width = `${Math.random() * 10 + 5}px`;
+      particle.style.height = particle.style.width;
+      particle.style.background = Math.random() > 0.5 ? colors.from : colors.to;
+      particle.style.left = `${x}%`;
+      particle.style.top = `${y}px`;
+      particle.style.transform = "translate(-50%, -50%)";
+      particle.style.opacity = "1";
+      particle.style.zIndex = "5";
+
+      const angle = Math.random() * Math.PI * 2;
+      const distance = Math.random() * 100 + 50;
+      const destinationX = x + (Math.cos(angle) * distance) / 10;
+      const destinationY = y + Math.sin(angle) * distance;
+
+      particle.animate(
+        [
+          { transform: "translate(-50%, -50%) scale(1)", opacity: 1 },
+          {
+            transform: `translate(calc(-50% + ${
+              Math.cos(angle) * distance
+            }px), calc(-50% + ${Math.sin(angle) * distance}px)) scale(0)`,
+            opacity: 0,
+          },
+        ],
+        {
+          duration: Math.random() * 500 + 500,
+          easing: "cubic-bezier(0.1, 0.8, 0.2, 1)",
+        }
+      );
+
+      gameRef.current.appendChild(particle);
+
+      setTimeout(() => {
+        particle.remove();
+      }, 1000);
+    }
   };
 
   const spawnWords = () => {
@@ -299,10 +441,10 @@ export default function WordDropGame() {
   return (
     <div className="flex flex-col h-screen">
       <Navbar />
-      <div className="relative flex-1 overflow-hidden bg-gradient-to-br from-[#f0f4f8] to-[#FFF5EB] font-sans">
+      <div className="relative flex-1 overflow-hidden bg-gradient-to-br from-[#f0f7fa] to-[#fff8f0] font-sans">
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {Array.from({ length: 20 }).map((_, i) => (
+          {Array.from({ length: 25 }).map((_, i) => (
             <div
               key={i}
               className="absolute rounded-full opacity-20"
@@ -311,7 +453,16 @@ export default function WordDropGame() {
                 height: `${Math.random() * 300 + 50}px`,
                 top: `${Math.random() * 100}%`,
                 left: `${Math.random() * 100}%`,
-                background: `radial-gradient(circle, ${randomColor()}, transparent)`,
+                background: `radial-gradient(circle, ${
+                  [
+                    "#014D4E",
+                    "#016566",
+                    "#FFE4C4",
+                    "#E6F2F2",
+                    "#f0f4f8",
+                    "#f0f7f7",
+                  ][Math.floor(Math.random() * 6)]
+                }, transparent)`,
                 animation: `float ${
                   Math.random() * 20 + 10
                 }s infinite ease-in-out`,
@@ -327,65 +478,179 @@ export default function WordDropGame() {
         >
           {gameStarted && (
             <>
-              <div className="fixed top-24 left-4 bg-white/90 backdrop-blur-sm text-gray-800 text-lg p-3 px-5 rounded-full shadow-lg z-10 border border-[#E6F2F2] transition-all duration-300">
+              {/* Score display */}
+              <motion.div
+                initial={{ x: -100, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="fixed top-24 left-4 bg-white/90 backdrop-blur-sm text-gray-800 text-lg p-3 px-5 rounded-full shadow-lg z-10 border border-[#E6F2F2] transition-all duration-300"
+              >
                 <div className="flex items-center">
-                  <div className="w-8 h-8 bg-gradient-to-r from-[#014D4E] to-[#016566] rounded-full flex items-center justify-center text-white mr-2 shadow-md">
-                    <span className="font-bold">{score}</span>
+                  <div className="w-10 h-10 bg-gradient-to-r from-[#014D4E] to-[#016566] rounded-full flex items-center justify-center text-white mr-2 shadow-md">
+                    <Trophy className="w-5 h-5" />
                   </div>
-                  <span className="font-medium">Score</span>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500 font-medium">
+                      SCORE
+                    </span>
+                    <span className="font-bold text-xl">{score}</span>
+                  </div>
                 </div>
-              </div>
-              <div className="fixed top-24 right-4 bg-white/90 backdrop-blur-sm text-gray-800 text-lg p-3 px-5 rounded-full shadow-lg z-10 border border-[#E6F2F2] flex items-center transition-all duration-300">
-                <span className="font-medium mr-2">Lives</span>
+              </motion.div>
+
+              {/* Lives display */}
+              <motion.div
+                initial={{ x: 100, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="fixed top-24 right-4 bg-white/90 backdrop-blur-sm text-gray-800 text-lg p-3 px-5 rounded-full shadow-lg z-10 border border-[#E6F2F2] flex items-center transition-all duration-300"
+              >
+                <div className="flex flex-col items-end mr-2">
+                  <span className="text-xs text-gray-500 font-medium">
+                    LIVES
+                  </span>
+                  <span className="sr-only">
+                    Lives remaining: {maxMisses - misses}
+                  </span>
+                </div>
                 <div className="flex">
                   {Array(maxMisses)
                     .fill(0)
                     .map((_, i) => (
-                      <div
+                      <motion.div
                         key={i}
-                        className={`w-6 h-6 mx-0.5 ${
-                          i < maxMisses - misses
-                            ? "text-red-500"
-                            : "text-gray-300"
-                        } transition-all duration-300`}
+                        initial={{ scale: 1 }}
+                        animate={{
+                          scale:
+                            i === maxMisses - misses - 1 && misses > 0
+                              ? [1, 1.5, 1]
+                              : 1,
+                          opacity: i < maxMisses - misses ? 1 : 0.3,
+                        }}
+                        transition={{ duration: 0.5 }}
+                        className={`w-6 h-6 mx-0.5 flex items-center justify-center transition-all duration-300`}
                       >
-                        ❤️
-                      </div>
+                        <Heart
+                          className={`w-5 h-5 ${
+                            i < maxMisses - misses
+                              ? "text-red-500 fill-red-500"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      </motion.div>
                     ))}
                 </div>
-              </div>
+              </motion.div>
 
               {/* Difficulty badge */}
-              <div className="fixed top-40 left-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium shadow-md z-10 border border-[#E6F2F2] transition-all duration-300">
-                <span
-                  className={`${
-                    difficulty === "easy"
-                      ? "text-[#016566]"
-                      : difficulty === "medium"
-                      ? "text-[#014D4E]"
-                      : "text-[#013638]"
-                  } font-bold`}
-                >
-                  {difficulty?.toUpperCase()} MODE
-                </span>
-              </div>
+              <motion.div
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="fixed top-40 left-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium shadow-md z-10 border border-[#E6F2F2] transition-all duration-300"
+              >
+                <div className="flex items-center">
+                  <span className="font-bold uppercase tracking-wider text-[#014D4E] mr-2">
+                    {difficulty} Mode
+                  </span>
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      difficulty === "easy"
+                        ? "bg-green-500"
+                        : difficulty === "medium"
+                        ? "bg-yellow-500"
+                        : "bg-red-500"
+                    }`}
+                  ></div>
+                </div>
+              </motion.div>
+
+              {/* Info button */}
+              <motion.button
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                onClick={() => setShowInstructions(true)}
+                className="fixed top-40 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md z-10 border border-[#E6F2F2] hover:bg-[#E6F2F2]/50 transition-all duration-300"
+                aria-label="Show instructions"
+              >
+                <Info className="w-5 h-5 text-[#014D4E]" />
+              </motion.button>
             </>
           )}
 
           <AnimatePresence>
+            {showInstructions && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+                onClick={() => setShowInstructions(false)}
+              >
+                <motion.div
+                  initial={{ y: 20 }}
+                  animate={{ y: 0 }}
+                  className="bg-white rounded-2xl p-8 max-w-md m-4 shadow-2xl"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h3 className="text-2xl font-bold mb-4 text-[#014D4E]">
+                    How to Play
+                  </h3>
+                  <ul className="space-y-3 mb-6">
+                    <li className="flex items-start">
+                      <div className="bg-[#E6F2F2] rounded-full p-1 mr-3 mt-0.5">
+                        <Star className="w-4 h-4 text-[#014D4E]" />
+                      </div>
+                      <p>
+                        Colorful orbs with positive words will fall from the top
+                      </p>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="bg-[#E6F2F2] rounded-full p-1 mr-3 mt-0.5">
+                        <Star className="w-4 h-4 text-[#014D4E]" />
+                      </div>
+                      <p>Click on them before they reach the bottom</p>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="bg-[#E6F2F2] rounded-full p-1 mr-3 mt-0.5">
+                        <Star className="w-4 h-4 text-[#014D4E]" />
+                      </div>
+                      <p>You have 3 lives - don't miss too many!</p>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="bg-[#E6F2F2] rounded-full p-1 mr-3 mt-0.5">
+                        <Star className="w-4 h-4 text-[#014D4E]" />
+                      </div>
+                      <p>Collect as many positive words as you can</p>
+                    </li>
+                  </ul>
+                  <button
+                    onClick={() => setShowInstructions(false)}
+                    className="w-full bg-gradient-to-r from-[#014D4E] to-[#016566] text-white font-medium py-2 px-4 rounded-lg hover:opacity-90 transition-opacity"
+                  >
+                    Got it!
+                  </button>
+                </motion.div>
+              </motion.div>
+            )}
+
             {!gameStarted && !gameOver && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl text-center z-20 w-96 border border-[#E6F2F2]"
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-sm p-8 rounded-2xl shadow-xl text-center z-20 w-96 border border-[#E6F2F2]"
               >
                 <motion.div
                   initial={{ y: -20 }}
                   animate={{ y: 0 }}
                   className="mb-6"
                 >
-                  <h2 className="text-4xl font-bold mb-2 text-[#014D4E]">
+                  <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-r from-[#014D4E] to-[#016566] rounded-full flex items-center justify-center">
+                    <span className="text-4xl">✨</span>
+                  </div>
+                  <h2 className="text-4xl font-bold mb-2 text-[#014D4E] tracking-tight">
                     Word Drop
                   </h2>
                   <p className="text-gray-600">
@@ -397,7 +662,7 @@ export default function WordDropGame() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.2 }}
-                  className="mb-8 bg-[#E6F2F2]/30 p-4 rounded-xl"
+                  className="mb-8 bg-gradient-to-r from-[#E6F2F2]/30 to-[#FFE4C4]/30 p-4 rounded-xl"
                 >
                   <p className="text-gray-700 mb-2 font-medium">How to play:</p>
                   <ul className="text-sm text-gray-600 text-left list-disc pl-5 space-y-1">
@@ -418,25 +683,28 @@ export default function WordDropGame() {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => startGame("easy")}
-                    className="bg-gradient-to-r from-[#014D4E] to-[#016566] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg border border-[#E6F2F2]"
+                    className="bg-gradient-to-r from-[#014D4E] to-[#016566] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg border border-[#E6F2F2] flex justify-between items-center"
                   >
-                    Easy
+                    <span>Easy</span>
+                    <div className="w-4 h-4 rounded-full bg-green-500"></div>
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => startGame("medium")}
-                    className="bg-gradient-to-r from-[#016566] to-[#014D4E] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg border border-[#E6F2F2]"
+                    className="bg-gradient-to-r from-[#014D4E] to-[#016566] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg border border-[#E6F2F2] flex justify-between items-center"
                   >
-                    Medium
+                    <span>Medium</span>
+                    <div className="w-4 h-4 rounded-full bg-yellow-500"></div>
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => startGame("hard")}
-                    className="bg-gradient-to-r from-[#013638] to-[#014D4E] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg border border-[#E6F2F2]"
+                    className="bg-gradient-to-r from-[#014D4E] to-[#016566] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg border border-[#E6F2F2] flex justify-between items-center"
                   >
-                    Hard
+                    <span>Hard</span>
+                    <div className="w-4 h-4 rounded-full bg-red-500"></div>
                   </motion.button>
                 </div>
               </motion.div>
@@ -447,22 +715,37 @@ export default function WordDropGame() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl text-center z-20 w-96 border border-[#E6F2F2]"
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-sm p-8 rounded-2xl shadow-xl text-center z-20 w-96 border border-[#E6F2F2]"
               >
-                <div className="mb-2 flex justify-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-[#014D4E] to-[#016566] rounded-full flex items-center justify-center text-white">
+                <div className="mb-4 flex justify-center">
+                  <motion.div
+                    initial={{ rotate: 0, scale: 0.8 }}
+                    animate={{ rotate: 360, scale: 1 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="w-20 h-20 bg-gradient-to-r from-[#014D4E] to-[#016566] rounded-full flex items-center justify-center text-white"
+                  >
                     <span className="text-3xl">🎉</span>
-                  </div>
+                  </motion.div>
                 </div>
                 <h2 className="text-3xl font-bold mb-4 text-[#014D4E]">
                   Game Over!
                 </h2>
 
-                <div className="bg-[#E6F2F2]/30 p-4 rounded-xl mb-6">
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="bg-gradient-to-r from-[#E6F2F2]/50 to-[#FFE4C4]/50 p-4 rounded-xl mb-6"
+                >
                   <p className="text-gray-700 mb-1">Your Score</p>
-                  <p className="text-4xl font-bold text-[#014D4E] mb-2">
+                  <motion.p
+                    initial={{ scale: 0.5 }}
+                    animate={{ scale: [0.5, 1.2, 1] }}
+                    transition={{ delay: 0.4, duration: 0.5 }}
+                    className="text-4xl font-bold text-[#014D4E] mb-2"
+                  >
                     {score}
-                  </p>
+                  </motion.p>
                   <p className="text-sm text-gray-500">
                     {score < 5
                       ? "Good effort! Keep practicing."
@@ -470,9 +753,14 @@ export default function WordDropGame() {
                       ? "Well done! You're getting better."
                       : "Amazing job! You're a pro!"}
                   </p>
-                </div>
+                </motion.div>
 
-                <div className="mb-6">
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="mb-6"
+                >
                   <p className="font-medium text-gray-700 mb-2">
                     Your Positive Words:
                   </p>
@@ -483,11 +771,14 @@ export default function WordDropGame() {
                         : "No words collected"}
                     </p>
                   </div>
-                </div>
+                </motion.div>
 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.6 }}
                   onClick={restartGame}
                   className="bg-gradient-to-r from-[#014D4E] to-[#016566] hover:from-[#013638] hover:to-[#015556] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg w-full"
                 >
